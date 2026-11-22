@@ -1,7 +1,7 @@
  import type { Express } from 'express';
   import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
   import { ADVANCED_MODEL } from '../services/openaiModels';
-  import { respond, webSearchTool, parseJSONText } from '../services/openaiResponses';
+  import { respond, toResult, webSearchTool, parseJSONText } from '../services/openaiResponses';
   import { eq, and, desc, sql } from 'drizzle-orm';
   import {
     contacts,
@@ -1283,13 +1283,25 @@ Email: ${contact.email || ''}
 Search the web for this person and their company. Only include details you found; leave unknown fields empty.
 Return as JSON with keys: companySize, industry, socialProfiles, insights`;
 
-          // Research feature: Responses API with live web search; citations saved with the data
-          const result = await respond(openai, {
-            model: ADVANCED_MODEL,
-            input: prompt,
-            json: true,
-            tools: [webSearchTool()],
-          });
+          // Research feature: Responses API with live web search; citations saved with the data.
+          // Web search can outlast the serverless time limit, so it runs as a background response:
+          // the first call starts it and the client repeats the request with responseId until done.
+          const responseId = typeof req.body?.responseId === 'string' ? req.body.responseId : undefined;
+          const result = responseId
+            ? toResult(await (openai.responses as any).retrieve(responseId), true)
+            : await respond(openai, {
+                model: ADVANCED_MODEL,
+                input: prompt,
+                json: true,
+                tools: [webSearchTool()],
+                background: true,
+              });
+          if (result.status === 'queued' || result.status === 'in_progress') {
+            return res.status(202).json({ pending: true, responseId: result.id });
+          }
+          if (result.status && result.status !== 'completed') {
+            return res.status(502).json({ error: `Enrichment ${result.status}` });
+          }
 
           try {
             if (!result.data) throw new Error('No JSON in response');

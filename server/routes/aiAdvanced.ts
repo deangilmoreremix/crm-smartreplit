@@ -148,18 +148,22 @@ export function registerAIAdvancedRoutes(app: Express): void {
        const sessionId = req.body.sessionId || `session-${Date.now()}`;
        memoryService.recordObservation(userId, 'user_prompt', JSON.stringify(req.body), { endpoint: req.path }).catch(() => {});
 
-       if (!aiService.checkAIRateLimit(userId)) {
+       if (!req.body?.responseId && !aiService.checkAIRateLimit(userId)) {
          memoryService.recordObservation(userId, 'error', 'Error in ' + req.path + ': Rate limit exceeded', { endpoint: req.path }).catch(() => {});
          return res.status(429).json({ error: 'Rate limit exceeded' });
        }
 
-       const { topic, depth } = req.body;
+       const { topic, depth, responseId } = req.body;
        if (!topic) {
          memoryService.recordObservation(userId, 'error', 'Error in ' + req.path + ': Topic required', { endpoint: req.path }).catch(() => {});
          return res.status(400).json({ error: 'Topic required' });
        }
 
-       const result = await aiService.researchTopic(topic, depth || 'comprehensive');
+       const result = await aiService.researchTopic(topic, depth || 'comprehensive', responseId);
+       if (result.pending) {
+         // Background job still running: the client repeats the request with this responseId
+         return res.json({ success: true, pending: true, responseId: result.responseId });
+       }
        if (result.success) {
          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {});
          res.json({ success: true, research: result.data, source: result.source });

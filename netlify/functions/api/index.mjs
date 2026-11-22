@@ -2641,12 +2641,20 @@ Email: ${contact.email || ""}
 
 Search the web for this person and their company. Only include details you found; leave unknown fields empty.
 Return as JSON with keys: companySize, industry, socialProfiles, insights`;
-        const result = await respond(openai, {
+        const responseId = typeof req.body?.responseId === "string" ? req.body.responseId : void 0;
+        const result = responseId ? toResult(await openai.responses.retrieve(responseId), true) : await respond(openai, {
           model: ADVANCED_MODEL,
           input: prompt,
           json: true,
-          tools: [webSearchTool()]
+          tools: [webSearchTool()],
+          background: true
         });
+        if (result.status === "queued" || result.status === "in_progress") {
+          return res.status(202).json({ pending: true, responseId: result.id });
+        }
+        if (result.status && result.status !== "completed") {
+          return res.status(502).json({ error: `Enrichment ${result.status}` });
+        }
         try {
           if (!result.data) throw new Error("No JSON in response");
           enrichedData = { ...result.data, sources: result.sources };
@@ -15908,18 +15916,25 @@ async function callAIJson(systemPrompt, userPrompt, model = DEFAULT_MODEL, maxTo
     return { success: false, error: error.message, source: "fallback" };
   }
 }
-async function callAIWithTools(systemPrompt, userPrompt, tools, model = ADVANCED_MODEL, maxTokens = 4e3) {
+async function callAIWithTools(systemPrompt, userPrompt, tools, model = ADVANCED_MODEL, maxTokens = 4e3, responseId) {
   const client = await getOpenAIClient2();
   if (!client) return { success: false, error: NO_KEY_MESSAGE, source: "fallback" };
   try {
-    const result = await respond(client, {
+    const result = responseId ? toResult(await client.responses.retrieve(responseId), true) : await respond(client, {
       model,
       instructions: systemPrompt,
       input: userPrompt,
       json: true,
       tools,
-      maxOutputTokens: maxTokens
+      maxOutputTokens: maxTokens,
+      background: true
     });
+    if (result.status === "queued" || result.status === "in_progress") {
+      return { success: true, pending: true, responseId: result.id, source: "openai" };
+    }
+    if (result.status && result.status !== "completed") {
+      return { success: false, error: `The AI request ${result.status}`, source: "fallback" };
+    }
     if (!result.data) return { success: false, error: "The AI response was not valid JSON", source: "fallback" };
     return {
       success: true,
@@ -15985,11 +16000,14 @@ async function analyzeWinRate(deals2) {
     700
   );
 }
-async function generateSalesForecast(deals2, period = "quarter") {
+async function generateSalesForecast(deals2, period = "quarter", responseId) {
   return callAIWithTools(
     `You are a sales forecasting expert. Use the python tool to compute the weighted forecast (value \xD7 probability), best and worst case from the deal data. Return JSON with: weighted_forecast (number), best_case (number), worst_case (number), confidence_level (number), period (string), monthly_breakdown (array of {month, forecast, probability}), key_drivers (array), risk_factors (array), recommendations (array).`,
     `Generate ${period} sales forecast for: ${JSON.stringify(deals2)}`,
-    [CODE_INTERPRETER]
+    [CODE_INTERPRETER],
+    ADVANCED_MODEL,
+    4e3,
+    responseId
   );
 }
 async function analyzeLiveDeals(deals2) {
@@ -16128,11 +16146,14 @@ async function transformTestimonial(rawTestimonial, format = "polished") {
     300
   );
 }
-async function analyzeBusiness(businessData) {
+async function analyzeBusiness(businessData, responseId) {
   return callAIWithTools(
     `You are a senior business consultant. Use web search to check the business's website, market and competitors. Return JSON with: swot_analysis (object with strengths/weaknesses/opportunities/threats), market_position (string), growth_opportunities (array), risk_factors (array), strategic_recommendations (array), kpi_suggestions (array), competitive_advantages (array).`,
     `Analyze this business: ${JSON.stringify(businessData)}`,
-    [webSearchTool()]
+    [webSearchTool()],
+    ADVANCED_MODEL,
+    4e3,
+    responseId
   );
 }
 async function summarizeMeeting(transcript) {
@@ -16241,11 +16262,14 @@ async function generateRecommendations(context) {
     600
   );
 }
-async function researchTopic(topic, depth = "comprehensive") {
+async function researchTopic(topic, depth = "comprehensive", responseId) {
   return callAIWithTools(
     `You are an AI research assistant. Search the web and base findings on current sources. Return JSON with: summary (string), key_findings (array), sources_suggested (array of URLs you used), related_topics (array), market_implications (array), action_items (string).`,
     `Research topic: "${topic}". Depth: ${depth}`,
-    [webSearchTool()]
+    [webSearchTool()],
+    ADVANCED_MODEL,
+    4e3,
+    responseId
   );
 }
 async function generateReasoning(task, data) {
@@ -16482,12 +16506,15 @@ function registerAISalesToolsRoutes(app2) {
     ...requireSalesIntelligence,
     async (req, res) => {
       const userId = req.userId;
-      if (!checkAIRateLimit2(userId)) {
+      if (!req.body?.responseId && !checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2, period } = req.body;
+      const { deals: deals2, period, responseId } = req.body;
       if (!deals2) return res.status(400).json({ error: "Deals data required" });
-      const result = await generateSalesForecast(deals2, period || "quarter");
+      const result = await generateSalesForecast(deals2, period || "quarter", responseId);
+      if (result.pending) {
+        return res.json({ success: true, pending: true, responseId: result.responseId });
+      }
       if (result.success) {
         res.json({ success: true, forecast: result.data, source: result.source });
       } else {
@@ -17037,12 +17064,15 @@ function registerAIContentRoutes(app2) {
       const sessionId = req.body.sessionId || `session-${Date.now()}`;
       memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
-      if (!checkAIRateLimit2(userId)) {
+      if (!req.body?.responseId && !checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { businessData } = req.body;
+      const { businessData, responseId } = req.body;
       if (!businessData) return res.status(400).json({ error: "Business data required" });
-      const result = await analyzeBusiness(businessData);
+      const result = await analyzeBusiness(businessData, responseId);
+      if (result.pending) {
+        return res.json({ success: true, pending: true, responseId: result.responseId });
+      }
       if (result.success) {
         memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
@@ -17413,18 +17443,21 @@ function registerAIAdvancedRoutes(app2) {
       const sessionId = req.body.sessionId || `session-${Date.now()}`;
       memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
-      if (!checkAIRateLimit2(userId)) {
+      if (!req.body?.responseId && !checkAIRateLimit2(userId)) {
         memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { topic, depth } = req.body;
+      const { topic, depth, responseId } = req.body;
       if (!topic) {
         memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Topic required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Topic required" });
       }
-      const result = await researchTopic(topic, depth || "comprehensive");
+      const result = await researchTopic(topic, depth || "comprehensive", responseId);
+      if (result.pending) {
+        return res.json({ success: true, pending: true, responseId: result.responseId });
+      }
       if (result.success) {
         memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });

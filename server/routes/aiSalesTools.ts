@@ -218,14 +218,18 @@ export function registerAISalesToolsRoutes(app: Express): void {
     ...requireSalesIntelligence,
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
-      if (!aiService.checkAIRateLimit(userId)) {
+      if (!req.body?.responseId && !aiService.checkAIRateLimit(userId)) {
         return res.status(429).json({ error: 'Rate limit exceeded' });
       }
 
-      const { deals, period } = req.body;
+      const { deals, period, responseId } = req.body;
       if (!deals) return res.status(400).json({ error: 'Deals data required' });
 
-      const result = await aiService.generateSalesForecast(deals, period || 'quarter');
+      const result = await aiService.generateSalesForecast(deals, period || 'quarter', responseId);
+      if (result.pending) {
+        // Background job still running: the client repeats the request with this responseId
+        return res.json({ success: true, pending: true, responseId: result.responseId });
+      }
       if (result.success) {
         res.json({ success: true, forecast: result.data, source: result.source });
       } else {

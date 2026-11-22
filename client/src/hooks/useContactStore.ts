@@ -382,12 +382,25 @@ export const useContactStore = create<ContactStore>((set, get) => ({
 
   enrichContact: async (id: string) => {
     try {
-      const response = await fetch(`/api/contacts/${id}/enrich`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-      const result = await response.json().catch(() => ({}));
+      // Enrichment runs as a background job (web search): repeat the request with the returned
+      // responseId every 2 s until it finishes (up to 3 minutes).
+      const deadline = Date.now() + 180_000;
+      let response: Response;
+      let result: any;
+      let responseId: string | undefined;
+      for (;;) {
+        response = await fetch(`/api/contacts/${id}/enrich`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          ...(responseId ? { body: JSON.stringify({ responseId }) } : {}),
+        });
+        result = await response.json().catch(() => ({}));
+        if (response.status !== 202 || !result.pending) break;
+        if (Date.now() > deadline) throw new Error('Enrichment timed out. Please try again.');
+        responseId = result.responseId;
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
       if (!response.ok || !result.data) {
         throw new Error(result.message || result.error || `Enrichment failed (${response.status})`);
       }

@@ -9,7 +9,7 @@ import type { Response } from 'express';
 import { memoryService } from '../memory';
 import { getUserOpenAIClient, NO_KEY_MESSAGE } from './userOpenAI';
 import { DEFAULT_MODEL, ADVANCED_MODEL } from './openaiModels';
-import { respond, webSearchTool, parseJSONText } from './openaiResponses';
+import { respond, toResult, webSearchTool, parseJSONText } from './openaiResponses';
 
 // OpenAI client for the signed-in user of the current request (their own key; no server fallback)
 async function getOpenAIClient(): Promise<OpenAI | null> {
@@ -60,6 +60,9 @@ export interface AIResult {
   error?: string;
   source: 'openai' | 'fallback';
   usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  /** Long tool calls run as OpenAI background responses: the client repeats the request with responseId. */
+  pending?: boolean;
+  responseId?: string;
 }
 
 /**
@@ -148,19 +151,31 @@ async function callAIWithTools(
   userPrompt: string,
   tools: any[],
   model: string = ADVANCED_MODEL,
-  maxTokens: number = 4000
+  maxTokens: number = 4000,
+  responseId?: string
 ): Promise<AIResult> {
   const client = await getOpenAIClient();
   if (!client) return { success: false, error: NO_KEY_MESSAGE, source: 'fallback' };
   try {
-    const result = await respond(client, {
-      model,
-      instructions: systemPrompt,
-      input: userPrompt,
-      json: true,
-      tools,
-      maxOutputTokens: maxTokens,
-    });
+    // Web search / code interpreter can take longer than the serverless function limit, so these run as
+    // background responses. The first call starts the job; later calls (with responseId) check on it.
+    const result = responseId
+      ? toResult(await (client.responses as any).retrieve(responseId), true)
+      : await respond(client, {
+          model,
+          instructions: systemPrompt,
+          input: userPrompt,
+          json: true,
+          tools,
+          maxOutputTokens: maxTokens,
+          background: true,
+        });
+    if (result.status === 'queued' || result.status === 'in_progress') {
+      return { success: true, pending: true, responseId: result.id, source: 'openai' };
+    }
+    if (result.status && result.status !== 'completed') {
+      return { success: false, error: `The AI request ${result.status}`, source: 'fallback' };
+    }
     if (!result.data) return { success: false, error: 'The AI response was not valid JSON', source: 'fallback' };
     return {
       success: true,
@@ -282,12 +297,15 @@ export async function analyzeWinRate(deals: any[]): Promise<AIResult> {
   );
 }
 
-export async function generateSalesForecast(deals: any[], period: string = 'quarter'): Promise<AIResult> {
+export async function generateSalesForecast(deals: any[], period: string = 'quarter', responseId?: string): Promise<AIResult> {
   // Numbers are computed with code_interpreter rather than estimated in text
   return callAIWithTools(
     `You are a sales forecasting expert. Use the python tool to compute the weighted forecast (value × probability), best and worst case from the deal data. Return JSON with: weighted_forecast (number), best_case (number), worst_case (number), confidence_level (number), period (string), monthly_breakdown (array of {month, forecast, probability}), key_drivers (array), risk_factors (array), recommendations (array).`,
     `Generate ${period} sales forecast for: ${JSON.stringify(deals)}`,
-    [CODE_INTERPRETER]
+    [CODE_INTERPRETER],
+    ADVANCED_MODEL,
+    4000,
+    responseId
   );
 }
 
@@ -507,12 +525,15 @@ export async function transformTestimonial(rawTestimonial: string, format: strin
   );
 }
 
-export async function analyzeBusiness(businessData: any): Promise<AIResult> {
+export async function analyzeBusiness(businessData: any, responseId?: string): Promise<AIResult> {
   // Research feature: web search for the business's current market and competitors
   return callAIWithTools(
     `You are a senior business consultant. Use web search to check the business's website, market and competitors. Return JSON with: swot_analysis (object with strengths/weaknesses/opportunities/threats), market_position (string), growth_opportunities (array), risk_factors (array), strategic_recommendations (array), kpi_suggestions (array), competitive_advantages (array).`,
     `Analyze this business: ${JSON.stringify(businessData)}`,
-    [webSearchTool()]
+    [webSearchTool()],
+    ADVANCED_MODEL,
+    4000,
+    responseId
   );
 }
 
@@ -647,12 +668,15 @@ export async function generateRecommendations(context: {
   );
 }
 
-export async function researchTopic(topic: string, depth: string = 'comprehensive'): Promise<AIResult> {
+export async function researchTopic(topic: string, depth: string = 'comprehensive', responseId?: string): Promise<AIResult> {
   // Research feature: live web search with citations
   return callAIWithTools(
     `You are an AI research assistant. Search the web and base findings on current sources. Return JSON with: summary (string), key_findings (array), sources_suggested (array of URLs you used), related_topics (array), market_implications (array), action_items (string).`,
     `Research topic: "${topic}". Depth: ${depth}`,
-    [webSearchTool()]
+    [webSearchTool()],
+    ADVANCED_MODEL,
+    4000,
+    responseId
   );
 }
 

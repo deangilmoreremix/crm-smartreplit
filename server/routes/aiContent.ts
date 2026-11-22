@@ -240,14 +240,18 @@ export function registerAIContentRoutes(app: Express): void {
        const userId = (req as any).userId;
        const sessionId = req.body.sessionId || `session-${Date.now()}`;
        memoryService.recordObservation(userId, 'user_prompt', JSON.stringify(req.body), { endpoint: req.path }).catch(() => {});
-       if (!aiService.checkAIRateLimit(userId)) {
+       if (!req.body?.responseId && !aiService.checkAIRateLimit(userId)) {
          return res.status(429).json({ error: 'Rate limit exceeded' });
        }
 
-       const { businessData } = req.body;
+       const { businessData, responseId } = req.body;
        if (!businessData) return res.status(400).json({ error: 'Business data required' });
 
-       const result = await aiService.analyzeBusiness(businessData);
+       const result = await aiService.analyzeBusiness(businessData, responseId);
+       if (result.pending) {
+         // Background job still running: the client repeats the request with this responseId
+         return res.json({ success: true, pending: true, responseId: result.responseId });
+       }
        if (result.success) {
          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {});
          res.json({ success: true, analysis: result.data, source: result.source });

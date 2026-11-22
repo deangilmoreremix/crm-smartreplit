@@ -27,6 +27,8 @@ Scope: every AI feature in crm-smartreplit, covering the Express API (Netlify `a
 | Dead tool IDs | Eight Navbar and dashboard tool IDs opened an empty modal, and the "Voice Analysis" card had no component. | IDs now map to existing tools, the card is now the working Speech to Text tool, and Structured Data Extraction has a card. |
 | Dropped inputs | Competitor analysis and market trends silently ignored industry, strengths, target market and timeframe. | These now go into the prompt. |
 | Gated pages | An entitlement race redirected reloads or direct links to `/ai-tools` (and other gated pages) to `/upgrade`. | Entitlements now report loading until the user's plan is fetched. |
+| Missing edge functions | `ai-orchestrator.service.ts` called 9 Supabase functions that don't exist, so contact AI, communication AI and task-completion analysis always failed. | Each request type now uses `/api/ai/generate`, and task threads use `/api/ai/conversations`. |
+| Timeouts | Contact enrichment and the web-search or code-interpreter tools (sales forecast, business analysis, topic research) waited synchronously and could exceed Netlify's function limit. | These now run as OpenAI background responses. The client repeats the request with `responseId` every 2 s until the result is ready, for up to 3 minutes. |
 
 ## Verified
 - Server AI tests pass, including new ones for model mapping, Images API calls, the status check, smart greeting, the image route and JSON parsing. The 28 pre-existing auth/CRM test failures are unchanged.
@@ -36,9 +38,7 @@ Scope: every AI feature in crm-smartreplit, covering the Express API (Netlify `a
 - **Not verified against the live OpenAI API**, because there was no key in the test environment.
 
 ## Not changed (needs a decision or more work)
-- **Timeouts.** Netlify synchronous functions stop after roughly 10–26 s. Research (`/api/ai/research`) already runs in the background with polling. Contact enrichment (`/api/contacts/:id/enrich`) and the web-search or code-interpreter sales tools (`callAIWithTools`) still wait synchronously and may time out, because their clients don't poll yet. Raise the function timeout with Netlify support, or add polling for these.
 - **Streaming.** `/api/stream`, `/api/openai/responses/stream` and `/api/openclaw/chat/stream` are buffered by serverless-http on Netlify, so responses arrive all at once.
-- **Missing edge functions.** `client/src/services/ai-orchestrator.service.ts` calls Supabase edge functions that don't exist (`smart-score`, `smart-enrichment`, `email-composer`, `email-analyzer`, `ai-insights`, `communication-logs`, `smart-categorize`, `smart-qualify`, `assistant-thread`). These are used by task-completion analysis and the contact-ai and communication-ai services.
 - **Cost.** The dashboard fires the greeting, KPI and deal-intelligence calls on every load. Semantic and smart search make one embeddings request per contact and per deal.
 - **Plan check.** `PRODUCTION_READINESS` / `NETLIFY_ENVIRONMENT_SETUP.md` tell you to set `VITE_OPENAI_API_KEY`. Don't: `VITE_` variables are published in the browser bundle, and the app doesn't read them.
 - **Dev scripts.** `verify-ai-system.js` and `test-ai-system.js` still check for the deleted `netlify/functions/ai-proxy.js`.

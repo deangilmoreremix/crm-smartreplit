@@ -8,19 +8,32 @@ import { researchAI } from './aiGenerate';
 
 const API_BASE = '/api/ai';
 
+const POLL_INTERVAL_MS = 2000;
+const POLL_TIMEOUT_MS = 180_000;
+
 async function apiCall(endpoint: string, body: any): Promise<any> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  // Long tools (web search, code interpreter) run as background jobs: while the server answers
+  // { pending, responseId }, repeat the request with that responseId until the result is ready.
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let request = body;
+  for (;;) {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || 'Request failed');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || 'Request failed');
+    }
+
+    const data = await response.json();
+    if (!data?.pending || !data.responseId) return data;
+    if (Date.now() > deadline) throw new Error('The AI request timed out. Please try again.');
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    request = { ...body, responseId: data.responseId };
   }
-
-  return response.json();
 }
 
 // ============================================================
