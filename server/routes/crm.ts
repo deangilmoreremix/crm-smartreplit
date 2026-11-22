@@ -50,7 +50,9 @@
     });
 
   // Get a single contact
-  app.get('/api/contacts/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
+  app.get('/api/contacts/:id', requireAuth({ checkEntitlement: false }), async (req, res, next) => {
+    // Not a contact id (e.g. /api/contacts/duplicates): let the route registered below handle it.
+    if (!/^\d+$/.test(req.params.id)) return next('route');
     try {
       const userId = (req as any).userId;
 
@@ -254,6 +256,10 @@
         return res.status(400).json({ error: 'primaryId and duplicateId are required' });
       }
 
+      if (primaryId === duplicateId) {
+        return res.status(400).json({ error: 'Cannot merge a contact with itself' });
+      }
+
       const { db } = await import('../db');
 
       const [primary] = await db
@@ -268,10 +274,6 @@
 
       if (!primary || !duplicate) {
         return res.status(404).json({ error: 'Primary or duplicate contact not found' });
-      }
-
-      if (primaryId === duplicateId) {
-        return res.status(400).json({ error: 'Cannot merge a contact with itself' });
       }
 
       const updatePayload: any = { ...(mergedFields || {}), updatedAt: new Date() };

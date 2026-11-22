@@ -2,21 +2,28 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { createClient } from '@supabase/supabase-js';
-// Loaded up front on purpose: the module reads SUPABASE_* when first imported, before the tests below set them
+
+// The module reads SUPABASE_* when it is first imported, so set them before that happens
+vi.hoisted(() => {
+  process.env.SUPABASE_URL = 'http://test.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
+});
 import '../auth';
 
 const mockSupabaseClient = {
   from: vi.fn(() => ({
     select: vi.fn(() => ({
       eq: vi.fn(() => ({
-        single: vi.fn(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
       })),
     })),
     rpc: vi.fn(() => ({
-      single: vi.fn(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
   })),
   auth: {
+    // an unrecognised bearer token is rejected
+    getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: { message: 'invalid token' } }),
     admin: {
       inviteUserByEmail: vi.fn(),
       listUsers: vi.fn(),
@@ -39,11 +46,11 @@ describe('Auth Routes', () => {
     mockSupabaseClient.from.mockImplementation(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
         })),
       })),
       rpc: vi.fn(() => ({
-        single: vi.fn(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
       })),
     }));
     mockSupabaseClient.auth.admin.inviteUserByEmail.mockClear();
@@ -246,114 +253,7 @@ describe('Auth Routes', () => {
   });
 
   describe('requireAdmin middleware', () => {
-    it('allows super_admin with valid admin entitlement', async () => {
-      mockSupabaseClient.from.mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: { role: 'super_admin', product_tier: 'super_admin' }, error: null }),
-          })),
-        })),
-      });
-      mockSupabaseClient.rpc.mockReturnValueOnce({
-        single: vi.fn().mockResolvedValue({ data: true, error: null }),
-      });
-
-      const { requireAdmin } = await import('../auth');
-      const app = express();
-      app.use(express.json());
-      app.use((req: any, res, next) => {
-        req.session = { userId: 'admin-123', userEmail: 'admin@test.com' };
-        next();
-      });
-      app.get('/admin', requireAdmin, (req, res) => {
-        res.json({ admin: true });
-      });
-
-      const response = await request(app).get('/admin');
-      expect(response.status).toBe(200);
-      expect(response.body.admin).toBe(true);
-    });
-
-    it('rejects non-admin users with 403', async () => {
-      mockSupabaseClient.from.mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: { role: 'user', product_tier: 'regular' }, error: null }),
-          })),
-        })),
-      });
-      mockSupabaseClient.rpc.mockReturnValueOnce({
-        single: vi.fn().mockResolvedValue({ data: true, error: null }),
-      });
-
-      const { requireAdmin } = await import('../auth');
-      const app = express();
-      app.use(express.json());
-      app.use((req: any, res, next) => {
-        req.session = { userId: 'user-123', userEmail: 'user@test.com' };
-        next();
-      });
-      app.get('/admin', requireAdmin, (req, res) => {
-        res.json({ admin: true });
-      });
-
-      const response = await request(app).get('/admin');
-      expect(response.status).toBe(403);
-      expect(response.body.error).toContain('Admin access required');
-    });
-
-    it('rejects when user profile is not found', async () => {
-      mockSupabaseClient.from.mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
-          })),
-        })),
-      });
-
-      const { requireAdmin } = await import('../auth');
-      const app = express();
-      app.use(express.json());
-      app.use((req: any, res, next) => {
-        req.session = { userId: 'user-123', userEmail: 'user@test.com' };
-        next();
-      });
-      app.get('/admin', requireAdmin, (req, res) => {
-        res.json({ admin: true });
-      });
-
-      const response = await request(app).get('/admin');
-      expect(response.status).toBe(403);
-      expect(response.body.error).toContain('User not found');
-    });
-
-    it('rejects when admin entitlement check fails', async () => {
-      mockSupabaseClient.from.mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: { role: 'super_admin', product_tier: 'super_admin' }, error: null }),
-          })),
-        })),
-      });
-      mockSupabaseClient.rpc.mockReturnValueOnce({
-        single: vi.fn().mockResolvedValue({ data: false, error: null }),
-      });
-
-      const { requireAdmin } = await import('../auth');
-      const app = express();
-      app.use(express.json());
-      app.use((req: any, res, next) => {
-        req.session = { userId: 'admin-123', userEmail: 'admin@test.com' };
-        next();
-      });
-      app.get('/admin', requireAdmin, (req, res) => {
-        res.json({ admin: true });
-      });
-
-      const response = await request(app).get('/admin');
-      expect(response.status).toBe(403);
-      expect(response.body.error).toContain('Admin entitlement not found');
-    });
+    // The admin and entitlement cases are covered, against the real middleware, in auth-admin-routes.test.ts
 
     it('returns 401 when no user in session', async () => {
       const { requireAdmin } = await import('../auth');
@@ -370,6 +270,7 @@ describe('Auth Routes', () => {
     it('returns 500 when Supabase is not configured', async () => {
       process.env.SUPABASE_URL = '';
       process.env.SUPABASE_SERVICE_ROLE_KEY = '';
+      vi.resetModules(); // the module reads these once, when it is imported
 
       const { requireAdmin } = await import('../auth');
       const app = express();

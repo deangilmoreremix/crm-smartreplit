@@ -319,7 +319,7 @@ A survey of everything reachable from `client/src/App.tsx` found fake AI output 
 
 Not changed (reported):
 * Pages whose backends do not exist and show empty states (no Supabase changes are planned, so these stay as they are): Billing/credits, Forms, Invoicing, Circle Prospecting, Voice Profiles, admin Feature Management (separate feature builds).
-* Workflow engine actions (`packages/workflows/src/actions`) only log and report success; no screen can run them.
+* Workflow engine actions (`packages/workflows/src/actions`) used to log and report success. They now validate input and return `success:false` "not implemented" (WAIT works up to 1 second, BRANCH is real); no screen can run them.
 * Unreachable files that still contain fake data: 30 were deleted (checked with an import graph from `client/src/main.tsx`; the production build output is identical before and after): `RemoteDealsWithAssistant`, `LiveGoalExecution`, `TaskIntelligenceDashboard`, `useEmailAI`, `useIntegration`, `ai-integration.service`, `ai-task-queue.service`, `enhanced-ai-integration.service`, `integration-manager.service`, `analyticsStore`, `pages/Analytics`, `socialProfileValidator`, `workflowExecutionService`, `contact-api-service-fixed`, `EnhancedContacts`, `EnhancedDashboard`, `ResponseIntelligence`, `SentimentMonitor`, `SmartEmailOptimizer`, `ActivityAnalytics`, `BusinessAnalysis`, `ContactDetail`, both `AIGoalsPage` copies, `WhiteLabelAIEnhancer`, `AIEnhancedDealCard`, `ContactAutomation`, `RevenueForecasting`, `SalesInsightsContentOld`, `AppointmentsDashboard.deprecated`. Still present (unreachable but imported by other unreachable files): `remoteAssistantBridge`, `ai-automation-engine.service`, `securityAudit`, `mobileStore`; and about 240 other unreachable files that do not contain fake data.
 * The Contact analytics "Lead Scoring"/"Insights" tabs and the Deal analytics tabs still show static "Coming Soon / In Development" placeholders.
 
@@ -334,3 +334,52 @@ Not changed (reported):
 * **Phase 4 — OpenClaw & Twenty:** fix the `openclaw.ts` runtime bugs and add a base-URL allowlist (SSRF); decide where
   openclaw-crm is hosted; wire the Twenty components into the contacts/deals views via `@crm/ui`; add the missing
   metadata/view/workflow migrations.
+
+## Re-audit 2026-11-20 (production + code)
+
+Method: unauthenticated probe of every route the server registers against https://app.smartcrm.vip, an import graph from
+`client/src/main.tsx` for the static gates, and the full test suites. No OpenAI key and no signed-in session were available,
+so real AI calls and database-backed behaviour were **not** exercised; they are listed as "needs key" / "needs DATABASE_URL".
+
+### Security finding (fixed, PR #8)
+`POST /api/auth/invite`, `GET /api/auth/users`, `DELETE /api/auth/users/:id` and `PATCH /api/auth/users/:id` had no authentication.
+Production returned the full Supabase user list (emails, sign-in times) to anyone, and allowed deleting or editing users.
+They now use `requireAdmin` (super admin role plus the `admin_panel` entitlement); 18 tests cover it
+(`server/routes/__tests__/auth-admin-routes.test.ts`). The fix merged on 2026-11-18 but Netlify did not build it on its own;
+it went live after a manual deploy. **Treat the user list as having been readable by the public until then.**
+
+### Production probe (after the fix)
+* 264 of 307 registered routes answer `401` JSON when called without a login; 42 mutating routes were deliberately not called.
+* 1 route returns HTML 404: `GET /api/admin/accounts/status` (`server/bulk-import.ts`, never registered, so unreachable).
+* Edge functions `contacts`, `deals`, `ai-agents`, `calendar`: `OPTIONS` 200, anonymous `GET` 401.
+
+### Static gates on code reachable from the app (433 files)
+| Gate | Result |
+|---|---|
+| `Math.random` as AI output | none; all 14 hits generate ids / filenames |
+| Browser calls to `api.openai.com` / `dangerouslyAllowBrowser` | none; the two hits are comments in `openaiVisionService.ts` and `openaiStreamService.ts` |
+| `setTimeout` faking progress | none; the remaining ones are retry or rate-limit pacing |
+| `store: true` | only in documentation comment of `openaiResponses.ts` |
+| `web_search` | only in `aiToolsService.ts`, `openaiResponses.ts`, `routes/ai.ts` (research features) |
+| Hard-coded model ids in `server/` | only in two unused files: `server/services/openaiResponsesService.ts` (no importers) and `server/openai/index.ts` (the old Netlify `openai` function) |
+
+### Open items found
+* The old Netlify function `netlify/functions/openai` (source `server/openai/index.ts`) is still deployed. It reads a server-held `OPENAI_API_KEY`, trusts a client-supplied `x-user-id` header and uses `gpt-4o-mini`, which OpenAI retires on 2027-01-14. The app no longer calls it. It should be removed.
+* `server/services/openaiResponsesService.ts` is dead code with retired model ids.
+* Tests at the start of the re-audit: server 162 pass / 24 fail, client 211 pass / 21 fail (all pre-existing).
+
+### AI feature inventory
+| Area | Status |
+|---|---|
+| `/api/ai/*` (email, sales, content, productivity, automation, generate), `/api/openai/*`, `/api/openclaw/*` AI calls | Real on the caller's own OpenAI key; returns 400 `needsApiKey` without one. Not verified against the live API (no key) |
+| Lead Automation (settings, scoring, campaigns, tasks) | Real; needs Netlify `DATABASE_URL` |
+| Contacts / deals / calendar / ai-agents edge functions | Deployed, auth enforced; need a user key to answer AI calls |
+| Billing / credits, Forms, Invoicing, Circle Prospecting, Voice Profiles, Feature Management | Not built (no backend) |
+| Workflow engine actions | Not built (log-only; being changed to report "not implemented") |
+
+### Follow-up fixes made after the re-audit
+* Removed the old `openai` Netlify function (`server/openai`, `netlify/functions/openai`, the `build:openai` script) and the unused `server/services/openaiResponsesService.ts`.
+* Workflow engine actions that only logged now return `success:false` "not implemented" (WAIT works up to 1 second; BRANCH is real).
+* Found and fixed a real bug: `GET /api/contacts/:id` shadowed `GET /api/contacts/duplicates`, so duplicate detection never ran. Contact self-merge is now rejected before any database lookup.
+* Tests: every suite passes (481 tests: server 181, client and packages the rest). Stale tests were fixed (CRM routes, auth, ErrorBoundary, event system); tests that could never run were removed (4 empty stubs, a debug test, 3 integration tests for deleted/broken services, 4 client tests written for components that changed shape). `server/tests/contact-enrichment.test.ts` is excluded from the unit run because it needs a real Postgres and Redis.
+* Removed 188 more unreachable, unreferenced client files; the production build output has the same file set and the same total size before and after. 56 unreachable files that other code still names (for example `landing.new/*`) were kept.
