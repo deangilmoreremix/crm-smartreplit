@@ -22,14 +22,17 @@ const PipelinePage: React.FC = () => {
   const closeNewDeal = () => {
     const next = new URLSearchParams(searchParams);
     next.delete('new');
+    next.delete('stage');
     setSearchParams(next, { replace: true });
   };
   const stages = useDealStore((s) => s.pipelines[s.activePipelineId]?.stages ?? []);
+  // /pipeline?new=1&stage=<id> (Kanban column "+") preselects that stage.
+  const presetStageId = searchParams.get('stage') || '';
   const [form, setForm] = useState({ title: '', value: '', stageId: '' });
   const [saving, setSaving] = useState(false);
   const submitNewDeal = async (e: React.FormEvent) => {
     e.preventDefault();
-    const stage = stages.find((s) => s.id === form.stageId) ?? stages[0];
+    const stage = stages.find((s) => s.id === (form.stageId || presetStageId)) ?? stages[0];
     if (!form.title.trim() || !stage) return;
     setSaving(true);
     const id = await useDealStore.getState().addDeal({
@@ -188,7 +191,7 @@ const PipelinePage: React.FC = () => {
                 Stage
                 <select
                   className="mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900"
-                  value={form.stageId || stages[0]?.id || ''}
+                  value={form.stageId || presetStageId || stages[0]?.id || ''}
                   onChange={(e) => setForm({ ...form, stageId: e.target.value })}
                 >
                   {stages.map((s) => (

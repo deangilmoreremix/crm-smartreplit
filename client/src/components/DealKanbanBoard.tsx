@@ -319,8 +319,6 @@ const DealKanbanBoard: React.FC = () => {
   } = useDealStore();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddingDeal, setIsAddingDeal] = useState(false);
-  const [newDealStage, setNewDealStage] = useState<string>('');
   const navigate = useSafeNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -355,7 +353,6 @@ const DealKanbanBoard: React.FC = () => {
     getId: (d) => d.id,
     onOpen: (d) => navigate(`/deals/${d.id}`),
     onFocusSearch: () => searchRef.current?.focus(),
-    enabled: !isAddingDeal,
   });
   useEffect(() => {
     if (!nav.activeId) return;
@@ -374,9 +371,9 @@ const DealKanbanBoard: React.FC = () => {
     await moveDeal(draggableId, newStageId, destination.index);
   };
 
+  // Opens the create-deal dialog on the Pipeline page with the column's stage preselected.
   const handleAddDeal = (stageId: string) => {
-    setNewDealStage(stageId);
-    setIsAddingDeal(true);
+    navigate(`/pipeline?new=1${stageId ? `&stage=${encodeURIComponent(stageId)}` : ''}`);
   };
 
   // The deal record page is the details/edit view (replaces the old placeholder modal).

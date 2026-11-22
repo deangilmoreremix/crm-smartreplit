@@ -56,6 +56,23 @@ test.describe('dashboard (local, stubbed backend)', () => {
     expect(c.pageErrors).toEqual([]);
   });
 
+  test('with sample data off the whole dashboard shows no sample people or deals', async ({ page }) => {
+    const c = await prepare(page);
+    await page.addInitScript(() => {
+      try { localStorage.setItem('smartcrm_show_demo_data', 'false'); } catch { /* ignore */ }
+    });
+    await page.goto('/dashboard');
+    await dismissFirstRun(page);
+    for (let i = 0; i < 12; i++) {
+      await page.mouse.wheel(0, 900);
+      await page.waitForTimeout(300);
+    }
+    const text = await page.locator('body').innerText();
+    expect(text).not.toMatch(/Jane Doe|John Smith|Sarah Johnson|Acme/);
+    expect(text).toMatch(/Sample data is hidden/);
+    expect(c.pageErrors, c.pageErrors.join('\n')).toEqual([]);
+  });
+
   test('Clear Demo Data hides samples and Restore brings them back', async ({ page }) => {
     await prepare(page);
     await page.goto('/dashboard');
