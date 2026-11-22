@@ -4,11 +4,60 @@
  */
 
 import { logger } from './logger.service';
-import { supabaseAnonKey } from '../lib/supabase';
 import { cacheService } from './cache.service';
 import { rateLimiter } from './rate-limiter.service';
-import { httpClient } from './http-client.service';
+import { generateAI, sendConversationMessage } from './aiGenerate';
 import { Contact } from '../types/contact';
+
+const ORCHESTRATOR_SYSTEM =
+  'You are the AI engine of a CRM. Base every answer on the input data; do not invent facts. Respond with valid JSON only.';
+
+/** JSON fields the callers read for each request type (contact-ai, communication-ai, TaskCard). */
+const RESULT_FIELDS: Record<string, string> = {
+  contact_scoring:
+    'score (0-100), breakdown {fitScore, engagementScore, conversionProbability, urgencyScore}, reasoning (string[]), recommendations (string[]), nextBestActions (string[])',
+  contact_enrichment: 'the enriched contact fields you can support from the input, plus confidence (0-100)',
+  insights_generation:
+    'insights: [{type: opportunity|risk|recommendation|prediction|pattern, title, description, confidence (0-100), impact: low|medium|high, category, actionable (boolean), suggestedActions (string[])}]',
+  relationship_mapping: 'relationships (array), networkInsights (string[]), influenceMap (object)',
+  predictive_analytics:
+    'predictions (array of {type, probability, timeframe, description}), trendAnalysis {direction, confidence, factors}, optimalActions (string[])',
+  email_generation:
+    'subject, body, tone, personalization {score, elements}, optimization {score, suggestions}, metadata {wordCount, readingTime}',
+  email_analysis:
+    'scores {sentiment, clarity, engagement, professionalism}, toneAnalysis {primary, secondary}, suggestions (array), predictions {responseRate, engagement}, alternatives {subject, body}',
+  communication_analysis:
+    'the fields this analysis needs, using these names where they apply: optimalChannels, timing, messaging, contentRecommendations, stages, objectionHandling, closingStrategies, fallbackPlans',
+  automation_suggestions: 'suggestions: [{title, description, trigger, actions (string[]), impact: low|medium|high}]',
+  task_completion_analysis: 'summary, outcome, followUps: [{title, description, dueInDays}]',
+};
+
+function buildOrchestratorPrompt(request: AIRequest): string {
+  const fields = RESULT_FIELDS[request.type] || 'the fields this task needs';
+  return [
+    `Task: ${request.type.replace(/_/g, ' ')}`,
+    request.context?.businessContext ? `Business context: ${request.context.businessContext}` : '',
+    `Input data:\n${JSON.stringify(request.data, null, 2).slice(0, 12000)}`,
+    `Return a JSON object with: ${fields}.`,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+/** Parse a JSON reply, tolerating ```json fences or text around the object. */
+function parseJSONText(text: string): any {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return undefined;
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return undefined;
+    }
+  }
+}
 
 export interface AIRequest {
   id: string;
@@ -21,7 +70,8 @@ export interface AIRequest {
     | 'communication_analysis'
     | 'automation_suggestions'
     | 'predictive_analytics'
-    | 'relationship_mapping';
+    | 'relationship_mapping'
+    | 'task_completion_analysis';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   data: any;
   context?: {
@@ -286,13 +336,6 @@ class AIOrchestrator {
   }
 
   private async callProvider(provider: AIProvider, request: AIRequest): Promise<any> {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = supabaseAnonKey;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing');
-    }
-
     // Check if this request should use a persistent assistant thread
     if (request.context?.assistantThreadId || request.options?.usePersistentThread) {
       return this.callAssistantThread(provider, request);
@@ -309,38 +352,15 @@ class AIOrchestrator {
       return this.callPersistentAssistant(request);
     }
 
-    // Map request types to edge function endpoints
-    const endpointMap: Record<string, string> = {
-      contact_scoring: 'smart-score',
-      contact_enrichment: 'smart-enrichment',
-      email_generation: 'email-composer',
-      email_analysis: 'email-analyzer',
-      insights_generation: 'ai-insights',
-      communication_analysis: 'communication-logs',
-      automation_suggestions: 'smart-categorize',
-      predictive_analytics: 'smart-qualify',
-      relationship_mapping: 'smart-enrichment',
-    };
-
-    const endpoint = endpointMap[request.type];
-    if (!endpoint) {
-      throw new Error(`No endpoint mapping for request type: ${request.type}`);
-    }
-
-    const response = await httpClient.post(
-      `${supabaseUrl}/functions/v1/${endpoint}`,
-      {
-        ...request.data,
-        aiProvider: provider.name,
-        options: request.options,
-      },
-      {
-        headers: { Authorization: `Bearer ${supabaseKey}` },
-        timeout: request.options?.timeout || 30000,
-      }
-    );
-
-    return response.data;
+    // These request types used to call Supabase edge functions that don't exist (smart-score,
+    // email-composer, ...). They now use the app's AI endpoint (/api/ai/generate, the user's OpenAI key).
+    const { data, model } = await generateAI({
+      json: true,
+      system: ORCHESTRATOR_SYSTEM,
+      prompt: buildOrchestratorPrompt(request),
+    });
+    if (!data) throw new Error('AI returned an unreadable response');
+    return { result: data, model, confidence: 0 };
   }
 
   private async callPersistentAssistant(request: AIRequest): Promise<any> {
@@ -381,31 +401,25 @@ class AIOrchestrator {
     }
   }
 
-  private async callAssistantThread(provider: AIProvider, request: AIRequest): Promise<any> {
-    // This method handles assistant thread-based requests
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = supabaseAnonKey;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing');
+  private async callAssistantThread(_provider: AIProvider, request: AIRequest): Promise<any> {
+    // The thread is a Responses API conversation (see assistantThreadManager); the missing
+    // 'assistant-thread' edge function is replaced by /api/ai/conversations/:id/messages.
+    const threadId = request.context?.assistantThreadId;
+    if (!threadId) {
+      const { data, model } = await generateAI({
+        json: true,
+        system: ORCHESTRATOR_SYSTEM,
+        prompt: buildOrchestratorPrompt(request),
+      });
+      if (!data) throw new Error('AI returned an unreadable response');
+      return { result: data, model, confidence: 0 };
     }
-
-    // For assistant threads, use a specialized endpoint
-    const response = await httpClient.post(
-      `${supabaseUrl}/functions/v1/assistant-thread`,
-      {
-        ...request.data,
-        threadId: request.context?.assistantThreadId,
-        aiProvider: provider.name,
-        options: request.options,
-      },
-      {
-        headers: { Authorization: `Bearer ${supabaseKey}` },
-        timeout: request.options?.timeout || 30000,
-      }
-    );
-
-    return response.data;
+    const { content, model } = await sendConversationMessage(threadId, buildOrchestratorPrompt(request), {
+      system: ORCHESTRATOR_SYSTEM,
+    });
+    const data = parseJSONText(content);
+    if (!data) throw new Error('AI returned an unreadable response');
+    return { result: data, model, confidence: 0, threadId };
   }
 
   private updateProviderPerformance(providerName: string, metadata: AIResponse['metadata']): void {
