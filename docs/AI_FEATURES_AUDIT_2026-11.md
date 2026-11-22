@@ -334,3 +334,45 @@ Not changed (reported):
 * **Phase 4 — OpenClaw & Twenty:** fix the `openclaw.ts` runtime bugs and add a base-URL allowlist (SSRF); decide where
   openclaw-crm is hosted; wire the Twenty components into the contacts/deals views via `@crm/ui`; add the missing
   metadata/view/workflow migrations.
+
+## Re-audit 2026-11-20 (production + code)
+
+Method: unauthenticated probe of every route the server registers against https://app.smartcrm.vip, an import graph from
+`client/src/main.tsx` for the static gates, and the full test suites. No OpenAI key and no signed-in session were available,
+so real AI calls and database-backed behaviour were **not** exercised; they are listed as "needs key" / "needs DATABASE_URL".
+
+### Security finding (fixed, PR #8)
+`POST /api/auth/invite`, `GET /api/auth/users`, `DELETE /api/auth/users/:id` and `PATCH /api/auth/users/:id` had no authentication.
+Production returned the full Supabase user list (emails, sign-in times) to anyone, and allowed deleting or editing users.
+They now use `requireAdmin` (super admin role plus the `admin_panel` entitlement); 18 tests cover it
+(`server/routes/__tests__/auth-admin-routes.test.ts`). The fix merged on 2026-11-18 but Netlify did not build it on its own;
+it went live after a manual deploy. **Treat the user list as having been readable by the public until then.**
+
+### Production probe (after the fix)
+* 264 of 307 registered routes answer `401` JSON when called without a login; 42 mutating routes were deliberately not called.
+* 1 route returns HTML 404: `GET /api/admin/accounts/status` (`server/bulk-import.ts`, never registered, so unreachable).
+* Edge functions `contacts`, `deals`, `ai-agents`, `calendar`: `OPTIONS` 200, anonymous `GET` 401.
+
+### Static gates on code reachable from the app (433 files)
+| Gate | Result |
+|---|---|
+| `Math.random` as AI output | none; all 14 hits generate ids / filenames |
+| Browser calls to `api.openai.com` / `dangerouslyAllowBrowser` | none; the two hits are comments in `openaiVisionService.ts` and `openaiStreamService.ts` |
+| `setTimeout` faking progress | none; the remaining ones are retry or rate-limit pacing |
+| `store: true` | only in documentation comment of `openaiResponses.ts` |
+| `web_search` | only in `aiToolsService.ts`, `openaiResponses.ts`, `routes/ai.ts` (research features) |
+| Hard-coded model ids in `server/` | only in two unused files: `server/services/openaiResponsesService.ts` (no importers) and `server/openai/index.ts` (the old Netlify `openai` function) |
+
+### Open items found
+* The old Netlify function `netlify/functions/openai` (source `server/openai/index.ts`) is still deployed. It reads a server-held `OPENAI_API_KEY`, trusts a client-supplied `x-user-id` header and uses `gpt-4o-mini`, which OpenAI retires on 2027-01-14. The app no longer calls it. It should be removed.
+* `server/services/openaiResponsesService.ts` is dead code with retired model ids.
+* Tests: server 162 pass / 24 fail, client 211 pass / 21 fail (the same pre-existing failures; none are in code changed here).
+
+### AI feature inventory
+| Area | Status |
+|---|---|
+| `/api/ai/*` (email, sales, content, productivity, automation, generate), `/api/openai/*`, `/api/openclaw/*` AI calls | Real on the caller's own OpenAI key; returns 400 `needsApiKey` without one. Not verified against the live API (no key) |
+| Lead Automation (settings, scoring, campaigns, tasks) | Real; needs Netlify `DATABASE_URL` |
+| Contacts / deals / calendar / ai-agents edge functions | Deployed, auth enforced; need a user key to answer AI calls |
+| Billing / credits, Forms, Invoicing, Circle Prospecting, Voice Profiles, Feature Management | Not built (no backend) |
+| Workflow engine actions | Not built (log-only; being changed to report "not implemented") |
