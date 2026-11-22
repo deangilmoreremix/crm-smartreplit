@@ -1789,7 +1789,8 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch contacts" });
     }
   });
-  app2.get("/api/contacts/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
+  app2.get("/api/contacts/:id", requireAuth({ checkEntitlement: false }), async (req, res, next) => {
+    if (!/^\d+$/.test(req.params.id)) return next("route");
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
@@ -1919,14 +1920,14 @@ function registerCRMRoutes(app2) {
       if (!primaryId || !duplicateId) {
         return res.status(400).json({ error: "primaryId and duplicateId are required" });
       }
+      if (primaryId === duplicateId) {
+        return res.status(400).json({ error: "Cannot merge a contact with itself" });
+      }
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [primary] = await db2.select().from(contacts).where(and2(eq2(contacts.id, primaryId), eq2(contacts.profileId, userId)));
       const [duplicate] = await db2.select().from(contacts).where(and2(eq2(contacts.id, duplicateId), eq2(contacts.profileId, userId)));
       if (!primary || !duplicate) {
         return res.status(404).json({ error: "Primary or duplicate contact not found" });
-      }
-      if (primaryId === duplicateId) {
-        return res.status(400).json({ error: "Cannot merge a contact with itself" });
       }
       const updatePayload = { ...mergedFields || {}, updatedAt: /* @__PURE__ */ new Date() };
       const [updated] = await db2.update(contacts).set(updatePayload).where(and2(eq2(contacts.id, primaryId), eq2(contacts.profileId, userId))).returning();
@@ -4455,91 +4456,58 @@ var registerAllTriggers = (engine) => {
 };
 
 // packages/workflows/src/actions/index.ts
+var notImplemented = (action) => ({
+  success: false,
+  error: `${action} is not implemented: the workflow engine has no backend for it yet, so nothing was done`
+});
 var sendEmailAction = async (context, config) => {
   const { to, subject, body, from } = config;
   if (!to || !subject || !body) {
     return { success: false, error: "Missing required email fields: to, subject, body" };
   }
-  console.log(`[Workflow ${context.workflowId}] Sending email to ${to}`);
-  return {
-    success: true,
-    output: { messageId: `email_${Date.now()}`, to, subject }
-  };
+  return notImplemented("SEND_EMAIL");
 };
 var updateFieldAction = async (context, config) => {
   const { objectType, recordId, field, value } = config;
   if (!objectType || !recordId || !field) {
     return { success: false, error: "Missing required fields: objectType, recordId, field" };
   }
-  console.log(
-    `[Workflow ${context.workflowId}] Updating ${objectType}:${recordId} ${field} = ${value}`
-  );
-  return {
-    success: true,
-    output: { objectType, recordId, field, newValue: value }
-  };
+  return notImplemented("UPDATE_FIELD");
 };
 var createRecordAction = async (context, config) => {
   const { objectType, data } = config;
   if (!objectType || !data) {
     return { success: false, error: "Missing required fields: objectType, data" };
   }
-  const recordId = `record_${Date.now()}`;
-  console.log(`[Workflow ${context.workflowId}] Creating ${objectType} record: ${recordId}`);
-  return {
-    success: true,
-    output: { recordId, objectType, data }
-  };
+  return notImplemented("CREATE_RECORD");
 };
 var createTaskAction = async (context, config) => {
   const { title, description, assigneeId, dueDate } = config;
   if (!title) {
     return { success: false, error: "Missing required field: title" };
   }
-  const taskId = `task_${Date.now()}`;
-  console.log(`[Workflow ${context.workflowId}] Creating task: ${title}`);
-  return {
-    success: true,
-    output: { taskId, title, assigneeId, dueDate }
-  };
+  return notImplemented("CREATE_TASK");
 };
 var createNoteAction = async (context, config) => {
   const { content, recordId, recordType } = config;
   if (!content || !recordId) {
     return { success: false, error: "Missing required fields: content, recordId" };
   }
-  const noteId = `note_${Date.now()}`;
-  console.log(
-    `[Workflow ${context.workflowId}] Creating note on ${recordType || "record"}:${recordId}`
-  );
-  return {
-    success: true,
-    output: { noteId, recordId, recordType }
-  };
+  return notImplemented("CREATE_NOTE");
 };
 var webhookAction = async (context, config) => {
   const { url, method, headers, body } = config;
   if (!url) {
     return { success: false, error: "Missing required field: url" };
   }
-  console.log(`[Workflow ${context.workflowId}] Calling webhook ${url}`);
-  return {
-    success: true,
-    output: { url, statusCode: 200, message: "Webhook called successfully" }
-  };
+  return notImplemented("WEBHOOK");
 };
 var codeAction = async (context, config) => {
   const { code, language } = config;
   if (!code) {
     return { success: false, error: "Missing required field: code" };
   }
-  console.log(`[Workflow ${context.workflowId}] Executing ${language || "javascript"} code`);
-  try {
-    const result = { executed: true, timestamp: Date.now() };
-    return { success: true, output: result };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
-  }
+  return notImplemented("CODE");
 };
 var waitAction = async (context, config) => {
   const { duration, unit } = config;
@@ -4547,8 +4515,8 @@ var waitAction = async (context, config) => {
     return { success: false, error: "Missing required field: duration" };
   }
   const ms = unit === "minutes" ? duration * 60 * 1e3 : unit === "hours" ? duration * 60 * 60 * 1e3 : duration;
-  console.log(`[Workflow ${context.workflowId}] Waiting ${duration} ${unit || "ms"}`);
-  await new Promise((resolve) => setTimeout(resolve, Math.min(ms, 1e3)));
+  if (ms > 1e3) return notImplemented("WAIT longer than 1 second");
+  await new Promise((resolve) => setTimeout(resolve, ms));
   return {
     success: true,
     output: { waited: duration, unit: unit || "ms" }
@@ -4592,35 +4560,21 @@ var sendSmsAction = async (context, config) => {
   if (!to || !message) {
     return { success: false, error: "Missing required fields: to, message" };
   }
-  console.log(`[Workflow ${context.workflowId}] Sending SMS to ${to}`);
-  return {
-    success: true,
-    output: { messageId: `sms_${Date.now()}`, to }
-  };
+  return notImplemented("SEND_SMS");
 };
 var createDealAction = async (context, config) => {
   const { title, amount, stage, contactId } = config;
   if (!title) {
     return { success: false, error: "Missing required field: title" };
   }
-  const dealId = `deal_${Date.now()}`;
-  console.log(`[Workflow ${context.workflowId}] Creating deal: ${title}`);
-  return {
-    success: true,
-    output: { dealId, title, amount, stage }
-  };
+  return notImplemented("CREATE_DEAL");
 };
 var createContactAction = async (context, config) => {
   const { email, firstName, lastName, company } = config;
   if (!email) {
     return { success: false, error: "Missing required field: email" };
   }
-  const contactId = `contact_${Date.now()}`;
-  console.log(`[Workflow ${context.workflowId}] Creating contact: ${email}`);
-  return {
-    success: true,
-    output: { contactId, email, firstName, lastName }
-  };
+  return notImplemented("CREATE_CONTACT");
 };
 var registerAllActions = (engine) => {
   engine.registerAction("SEND_EMAIL", sendEmailAction);

@@ -366,7 +366,7 @@ it went live after a manual deploy. **Treat the user list as having been readabl
 ### Open items found
 * The old Netlify function `netlify/functions/openai` (source `server/openai/index.ts`) is still deployed. It reads a server-held `OPENAI_API_KEY`, trusts a client-supplied `x-user-id` header and uses `gpt-4o-mini`, which OpenAI retires on 2027-01-14. The app no longer calls it. It should be removed.
 * `server/services/openaiResponsesService.ts` is dead code with retired model ids.
-* Tests: server 162 pass / 24 fail, client 211 pass / 21 fail (the same pre-existing failures; none are in code changed here).
+* Tests at the start of the re-audit: server 162 pass / 24 fail, client 211 pass / 21 fail (all pre-existing).
 
 ### AI feature inventory
 | Area | Status |
@@ -376,3 +376,10 @@ it went live after a manual deploy. **Treat the user list as having been readabl
 | Contacts / deals / calendar / ai-agents edge functions | Deployed, auth enforced; need a user key to answer AI calls |
 | Billing / credits, Forms, Invoicing, Circle Prospecting, Voice Profiles, Feature Management | Not built (no backend) |
 | Workflow engine actions | Not built (log-only; being changed to report "not implemented") |
+
+### Follow-up fixes made after the re-audit
+* Removed the old `openai` Netlify function (`server/openai`, `netlify/functions/openai`, the `build:openai` script) and the unused `server/services/openaiResponsesService.ts`.
+* Workflow engine actions that only logged now return `success:false` "not implemented" (WAIT works up to 1 second; BRANCH is real).
+* Found and fixed a real bug: `GET /api/contacts/:id` shadowed `GET /api/contacts/duplicates`, so duplicate detection never ran. Contact self-merge is now rejected before any database lookup.
+* Tests: every suite passes (481 tests: server 181, client and packages the rest). Stale tests were fixed (CRM routes, auth, ErrorBoundary, event system); tests that could never run were removed (4 empty stubs, a debug test, 3 integration tests for deleted/broken services, 4 client tests written for components that changed shape). `server/tests/contact-enrichment.test.ts` is excluded from the unit run because it needs a real Postgres and Redis.
+* Removed 188 more unreachable, unreferenced client files; the production build output has the same file set and the same total size before and after. 56 unreachable files that other code still names (for example `landing.new/*`) were kept.
