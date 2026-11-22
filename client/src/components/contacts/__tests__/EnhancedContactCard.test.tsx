@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import EnhancedContactCard from '../contacts/EnhancedContactCard';
+import EnhancedContactCard from '../EnhancedContactCard';
 
 // Mock the store functions
 vi.mock('../../store/contactStore', () => ({

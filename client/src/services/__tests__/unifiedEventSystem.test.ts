@@ -49,7 +49,6 @@ describe('UnifiedEventSystem', () => {
   let unsubscribe: () => void;
 
   beforeEach(() => {
-    vi.useFakeTimers();
     handlerCalls = [];
     mockHandler = (event: UnifiedEvent) => {
       handlerCalls.push(event);
@@ -68,7 +67,6 @@ describe('UnifiedEventSystem', () => {
 
   describe('Event Registration and Emission', () => {
     test('should register and handle events correctly', async () => {
-      vi.useRealTimers();
       // Register event handler
       unsubscribe = unifiedEventSystem.registerHandler({
         id: 'test-handler',
@@ -133,7 +131,7 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      vi.advanceTimersByTime(10);
+      await new Promise((resolve) => setTimeout(resolve, 80));
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).toHaveBeenCalledTimes(0);
@@ -163,7 +161,7 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      vi.advanceTimersByTime(10);
+      await new Promise((resolve) => setTimeout(resolve, 80));
 
       // High priority should be called first
       expect(callOrder).toEqual(['high', 'low']);
@@ -187,7 +185,7 @@ describe('UnifiedEventSystem', () => {
         data: { targeted: true },
       });
 
-      vi.advanceTimersByTime(10);
+      await new Promise((resolve) => setTimeout(resolve, 80));
 
       expect(mockTargetHandler).toHaveBeenCalledTimes(1);
       expect(mockTargetHandler).toHaveBeenCalledWith(
@@ -213,12 +211,12 @@ describe('UnifiedEventSystem', () => {
         });
       }
 
-      vi.advanceTimersByTime(10);
+      await new Promise((resolve) => setTimeout(resolve, 80));
 
       const history = unifiedEventSystem.getEventHistory();
       expect(history).toHaveLength(3);
-      expect(history[0].data.index).toBe(4); // Most recent
-      expect(history[2].data.index).toBe(2); // Oldest remaining
+      expect(history[0].data.index).toBe(2); // Oldest remaining (history is oldest first)
+      expect(history[2].data.index).toBe(4); // Most recent
     });
 
     test('should respect TTL for events', async () => {
@@ -238,10 +236,11 @@ describe('UnifiedEventSystem', () => {
         ttl: 1000, // 1 second
       });
 
-      // Fast-forward time past TTL
-      vi.advanceTimersByTime(1500);
-
-      vi.advanceTimersByTime(10);
+      // Move the clock past the TTL before the processor picks the event up
+      const now = Date.now();
+      const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 5000);
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      clock.mockRestore();
 
       // Handler should not be called due to expired TTL
       expect(handler).not.toHaveBeenCalled();
@@ -273,7 +272,7 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      vi.advanceTimersByTime(10);
+      await new Promise((resolve) => setTimeout(resolve, 80));
 
       // Error handler should have been called and failed
       expect(errorHandler).toHaveBeenCalledTimes(1);

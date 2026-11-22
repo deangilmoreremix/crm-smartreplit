@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import LeadScoringVisualization from '../contacts/LeadScoringVisualization';
+import LeadScoringVisualization from '../LeadScoringVisualization';
 
 vi.mock('../../store/contactStore', () => ({
   useContactStore: () => ({

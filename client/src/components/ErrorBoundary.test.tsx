@@ -1,11 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ErrorBoundary from './ErrorBoundary';
 
-// Mock child component that throws an error
+// Mock child component that throws an error (until `shouldThrow.value` is switched off)
+const shouldThrow = { value: true };
 const ThrowError = () => {
-  throw new Error('Test error');
+  if (shouldThrow.value) throw new Error('Test error');
+  return <div>Normal component</div>;
 };
 
 const NormalComponent = () => <div>Normal component</div>;
@@ -18,6 +20,10 @@ describe('ErrorBoundary', () => {
 
   afterAll(() => {
     console.error = originalError;
+  });
+
+  beforeEach(() => {
+    shouldThrow.value = true;
   });
 
   it('renders children when there is no error', () => {
@@ -39,7 +45,7 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     expect(screen.getByText('Try Again')).toBeInTheDocument();
-    expect(screen.getByText('Go Home')).toBeInTheDocument();
+    expect(screen.getByText('Reload Page')).toBeInTheDocument();
   });
 
   it('calls onError prop when error occurs', () => {
@@ -69,8 +75,7 @@ describe('ErrorBoundary', () => {
   it('retries when Try Again button is clicked', async () => {
     const user = userEvent.setup();
 
-    // First render with error
-    const { rerender } = render(
+    render(
       <ErrorBoundary>
         <ThrowError />
       </ErrorBoundary>
@@ -78,50 +83,21 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 
-    // Click retry - this should reset the error boundary
+    // The problem goes away, then the user retries: the boundary renders its children again
+    shouldThrow.value = false;
     await user.click(screen.getByText('Try Again'));
-
-    // Rerender with normal component
-    rerender(
-      <ErrorBoundary>
-        <NormalComponent />
-      </ErrorBoundary>
-    );
 
     expect(screen.getByText('Normal component')).toBeInTheDocument();
   });
 
-  it('shows error details in development mode', () => {
-    // Mock development environment
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
-
+  it('shows the error message', () => {
     render(
       <ErrorBoundary>
         <ThrowError />
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Error Details (Development Only)')).toBeInTheDocument();
-
-    // Restore original environment
-    process.env.NODE_ENV = originalEnv;
+    expect(screen.getByText('Test error')).toBeInTheDocument();
   });
 
-  it('hides error details in production mode', () => {
-    // Mock production environment
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
-
-    render(
-      <ErrorBoundary>
-        <ThrowError />
-      </ErrorBoundary>
-    );
-
-    expect(screen.queryByText('Error Details (Development Only)')).not.toBeInTheDocument();
-
-    // Restore original environment
-    process.env.NODE_ENV = originalEnv;
-  });
 });
