@@ -3,42 +3,41 @@ import express from 'express';
 import request from 'supertest';
 import { registerCRMRoutes } from '../crm';
 
-vi.mock('./auth', () => ({
-  requireAuth: () => (req: any, res: any, next: any) => {
-    req.userId = 'test-user';
+vi.mock('../auth', () => ({
+  requireAuth: () => (req: any, _res: any, next: any) => {
+    req.userId = '11111111-1111-4111-8111-111111111111';
     next();
   },
 }));
 
-const mockDb = {
-  select: vi.fn().mockReturnThis(),
-  from: vi.fn().mockReturnThis(),
-  where: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  and: vi.fn().mockReturnThis(),
-  desc: vi.fn().mockReturnThis(),
-  insert: vi.fn().mockReturnThis(),
-  values: vi.fn().mockReturnThis(),
-  returning: vi.fn(),
-  update: vi.fn().mockReturnThis(),
-  set: vi.fn().mockReturnThis(),
-  delete: vi.fn().mockReturnThis(),
-  orderBy: vi.fn().mockReturnThis(),
-  limit: vi.fn().mockReturnThis(),
-};
+// Every drizzle builder call returns the same chain; awaiting the chain yields the next queued result.
+const { queue, mockDb } = vi.hoisted(() => {
+  const queue: unknown[] = [];
+  const chain: any = new Proxy(
+    {},
+    {
+      get(_t, prop) {
+        if (prop === 'then') return (resolve: (v: unknown) => void) => resolve(queue.shift() ?? []);
+        return () => chain;
+      },
+    }
+  );
+  return { queue, mockDb: chain };
+});
 
-vi.mock('../db', () => ({
+vi.mock('../../db', () => ({
   db: mockDb,
 }));
 
 describe('CRM Routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queue.length = 0;
   });
 
   describe('Contacts API', () => {
     it('GET /api/contacts returns list of contacts', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'John', lastName: 'Doe', profileId: 'test-user' },
       ]);
 
@@ -53,7 +52,7 @@ describe('CRM Routes', () => {
     });
 
     it('GET /api/contacts/:id returns single contact', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'John', lastName: 'Doe', profileId: 'test-user' },
       ]);
 
@@ -67,7 +66,7 @@ describe('CRM Routes', () => {
     });
 
     it('GET /api/contacts/:id returns 404 when contact not found', async () => {
-      mockDb.returning.mockResolvedValueOnce([]);
+      queue.push([]);
 
       const app = express();
       app.use(express.json());
@@ -79,7 +78,7 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/contacts creates new contact', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'Jane', lastName: 'Smith', profileId: 'test-user' },
       ]);
 
@@ -108,10 +107,10 @@ describe('CRM Routes', () => {
     });
 
     it('PUT /api/contacts/:id updates existing contact', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'John', lastName: 'Doe', profileId: 'test-user' },
       ]);
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'John', lastName: 'Smith', profileId: 'test-user' },
       ]);
 
@@ -128,7 +127,7 @@ describe('CRM Routes', () => {
     });
 
     it('PUT /api/contacts/:id returns 404 when contact not found', async () => {
-      mockDb.returning.mockResolvedValueOnce([]);
+      queue.push([]);
 
       const app = express();
       app.use(express.json());
@@ -143,7 +142,7 @@ describe('CRM Routes', () => {
     });
 
     it('DELETE /api/contacts/:id deletes contact', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'John', profileId: 'test-user' },
       ]);
 
@@ -157,7 +156,7 @@ describe('CRM Routes', () => {
     });
 
     it('DELETE /api/contacts/:id returns 404 when contact not found', async () => {
-      mockDb.returning.mockResolvedValueOnce([]);
+      queue.push([]);
 
       const app = express();
       app.use(express.json());
@@ -169,7 +168,7 @@ describe('CRM Routes', () => {
     });
 
     it('GET /api/contacts/duplicates returns duplicate groups', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', phone: '123', company: 'Acme', profileId: 'test-user' },
         { id: 2, firstName: 'John', lastName: 'Doe', email: 'john@test.com', phone: '456', company: 'Acme', profileId: 'test-user' },
       ]);
@@ -185,13 +184,13 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/contacts/merge merges two contacts', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: 'test-user' },
       ]);
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 2, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: 'test-user' },
       ]);
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: 'test-user' },
       ]);
 
@@ -223,7 +222,7 @@ describe('CRM Routes', () => {
 
   describe('Deals API', () => {
     it('GET /api/deals returns list of deals', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, title: 'Deal 1', profileId: 'test-user' },
       ]);
 
@@ -237,7 +236,7 @@ describe('CRM Routes', () => {
     });
 
     it('GET /api/deals/:id returns single deal', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, title: 'Deal 1', profileId: 'test-user' },
       ]);
 
@@ -251,7 +250,7 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/deals creates new deal', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, title: 'New Deal', profileId: 'test-user' },
       ]);
 
@@ -261,7 +260,7 @@ describe('CRM Routes', () => {
 
       const response = await request(app)
         .post('/api/deals')
-        .send({ title: 'New Deal', value: 50000 });
+        .send({ title: 'New Deal', value: '50000', stage: 'qualification' });
 
       expect(response.status).toBe(201);
       expect(response.body.title).toBe('New Deal');
@@ -270,7 +269,7 @@ describe('CRM Routes', () => {
 
   describe('Tasks API', () => {
     it('GET /api/tasks returns list of tasks', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, title: 'Task 1', profileId: 'test-user' },
       ]);
 
@@ -284,7 +283,7 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/tasks creates new task', async () => {
-      mockDb.returning.mockResolvedValueOnce([
+      queue.push([
         { id: 1, title: 'New Task', profileId: 'test-user' },
       ]);
 
