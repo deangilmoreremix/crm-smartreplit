@@ -383,3 +383,18 @@ it went live after a manual deploy. **Treat the user list as having been readabl
 * Found and fixed a real bug: `GET /api/contacts/:id` shadowed `GET /api/contacts/duplicates`, so duplicate detection never ran. Contact self-merge is now rejected before any database lookup.
 * Tests: every suite passes (481 tests: server 181, client and packages the rest). Stale tests were fixed (CRM routes, auth, ErrorBoundary, event system); tests that could never run were removed (4 empty stubs, a debug test, 3 integration tests for deleted/broken services, 4 client tests written for components that changed shape). `server/tests/contact-enrichment.test.ts` is excluded from the unit run because it needs a real Postgres and Redis.
 * Removed 188 more unreachable, unreferenced client files; the production build output has the same file set and the same total size before and after. 56 unreachable files that other code still names (for example `landing.new/*`) were kept.
+
+### Client to server contract check (2026-11-23)
+The app (433 files reachable from `main.tsx`) calls 100 distinct `/api` URLs. 33 have no matching Express route:
+* No backend at all (pages show an error or empty state): Feature Management (`/api/admin/features*`, `/api/admin/tier-features*`, `/api/admin/users*`, `/api/features/check`), role migration (`/api/admin/migrate-roles`, `/api/admin/sync-metadata`), Billing credits (`/api/billing/credit-packages`, `/api/billing/purchase-credits`), Circle Prospecting (`/api/circles`, `/api/prospects`, `/api/prospecting/stats`), Forms (`/api/forms*`), Invoicing (`/api/invoices*`), Voice Profiles (`/api/voice/*`), Partner customers (`/api/partners/:id/customers`), tenant info (`/api/tenant/info`), Twilio VoIP recording and token (`/api/voip/twilio/*`).
+* Served by the removed legacy functions or dev-only: `/api/auth/dev-bypass`, `/api/auth/user-role`, `/api/auth/refresh`.
+* Not real misses (the pattern could not read a template string): `/api/...`, `/api/ai/conversations/${...}`, `/api/lead-automation${...}`.
+
+### AI routes and missing keys
+Every AI route file (`ai`, `aiSalesTools`, `aiCommunication`, `aiContent`, `aiProductivity`, `aiAutomation`, `aiAdvanced`, `openai`, `openaiResponses`) sends failures through `sendAIError`, which returns 400 `needsApiKey` when the user has no key, and none of them creates its own OpenAI client. Not exercised against the live API (no key).
+
+### Legacy standalone functions removed
+`users`, `partners`, `white-label`, `messaging`, `auth`, `entitlements` and `health` under `netlify/functions` were old parallel handlers: unauthenticated, not called by the app (all `/api/*` goes to the Express function), and `users`, `entitlements` and `health` crashed on start for the same Node 20 WebSocket reason. `partners` also returned made-up stats (42 customers, $14,200) when it had no database, and `auth` issued fake dev-bypass tokens. They and their build scripts are gone; `build:functions` now builds only `api` and `lead-automation-tick`. The shared modules `server/health`, `server/entitlements` and `server/messaging` stay because the Express app imports them.
+
+### Known, not fixed
+* `/api/workflows` writes columns the live `smartcrm_workflows` table does not have.
