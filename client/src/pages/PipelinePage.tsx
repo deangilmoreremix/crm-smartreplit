@@ -83,8 +83,9 @@ const PipelinePage: React.FC = () => {
   // Module Federation approach - no complex bridge logic needed
   // Data sync happens through the ModuleFederationPipeline component
 
+  // top-16 keeps the tab bar below the fixed navbar (it was hidden underneath it).
   return (
-    <div className="fixed inset-0 w-full overflow-hidden z-40">
+    <div className="fixed inset-x-0 bottom-0 top-16 w-full overflow-hidden z-40">
       {/* Tab Navigation */}
       <div
         className={`border-b ${isDark ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'} px-6 py-3`}

@@ -35,4 +35,15 @@ test.describe('pipeline (local, stubbed backend)', () => {
     await page.waitForTimeout(800);
     expect(c.pageErrors, c.pageErrors.join('\n')).toEqual([]);
   });
+
+  test('Pipeline / AI Analytics tabs are visible and clickable (not hidden under the navbar)', async ({ page }) => {
+    const c = await prepare(page);
+    await page.goto('/pipeline');
+    await page.waitForTimeout(2500);
+    await page.getByRole('button', { name: /AI Analytics/ }).click();
+    await page.waitForTimeout(800);
+    await page.getByRole('button', { name: /^📊?\s*Pipeline$/ }).click();
+    await page.waitForTimeout(500);
+    expect(c.pageErrors, c.pageErrors.join('\n')).toEqual([]);
+  });
 });
