@@ -35,7 +35,7 @@ Scope: every AI feature in crm-smartreplit, covering the Express API (Netlify `a
 - Client tests pass, including new ones for the renderer escape and the entitlement race.
 - `npm run build` passes, including `verify-dist`.
 - In the browser, with `/api` mocked: a direct load of `/ai-tools` works, all 38 hub tools open with content, the image generator sends GPT Image 2.6 options, and a text tool's result renders escaped with no page errors.
-- **Not verified against the live OpenAI API**, because there was no key in the test environment.
+- **Not verified against the live OpenAI API**, because there was no key in the test environment. To check it by hand on the deploy preview, follow [AI_TEST_CHECKLIST.md](AI_TEST_CHECKLIST.md).
 
 ## Not changed (needs a decision or more work)
 - **Streaming.** `/api/stream`, `/api/openai/responses/stream` and `/api/openclaw/chat/stream` are buffered by serverless-http on Netlify, so responses arrive all at once.
