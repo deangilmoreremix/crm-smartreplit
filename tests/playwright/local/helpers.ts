@@ -54,6 +54,12 @@ export async function prepare(page: Page): Promise<Collected> {
     if (/\/api\/(deals|contacts|tasks|appointments)(\?|$)/.test(url) && method === 'GET') {
       return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     }
+    if (/\/api\/(crm\/)?companies(\?|$)/.test(url) && method === 'GET') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    }
+    if (/\/api\/workflows(\?|$)/.test(url) && method === 'GET') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ workflows: [] }) });
+    }
     if (url.includes('/api/openai/status')) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ configured: false }) });
     }

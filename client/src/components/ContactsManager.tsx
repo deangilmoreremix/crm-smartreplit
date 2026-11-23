@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { RecordTable, contactsAdapter, useSafeNavigate } from './record-table';
-import type { RecordColumn } from './record-table';
+import type { BulkAdapter, BulkResult, RecordColumn } from './record-table';
+import { useDemoDataSafe } from '../contexts/DemoDataContext';
+import { useContactStore } from '../hooks/useContactStore';
+import SampleBadge from './SampleBadge';
 import ImportContactsModal from './ImportContactsModal';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import ContactAttachments from './ContactAttachments';
@@ -19,6 +22,8 @@ interface ApiContact {
   phone?: string | null;
   tags?: string[] | null;
   createdAt?: string | null;
+  /** Sample row (local only, never sent to the server). */
+  isDemo?: boolean;
 }
 
 const STATUS_OPTIONS = ['lead', 'prospect', 'active', 'customer', 'inactive'].map((s) => ({
@@ -69,6 +74,32 @@ const ContactsManager: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const navigate = useSafeNavigate();
+  const { showDemoData } = useDemoDataSafe();
+  const storeContacts = useContactStore((s) => s.contacts);
+
+  // Sample contacts are listed after the real ones (only while demo data is enabled).
+  const rows = useMemo<ApiContact[]>(
+    () => [
+      ...contacts,
+      ...(showDemoData
+        ? Object.values(storeContacts)
+            .filter((c) => c.isDemo)
+            .map<ApiContact>((c) => ({
+              id: `demo-${c.id}`,
+              firstName: c.firstName,
+              lastName: c.lastName,
+              email: c.email,
+              company: c.company,
+              industry: c.industry,
+              status: c.status,
+              phone: c.phone,
+              isDemo: true,
+            }))
+        : []),
+    ],
+    [contacts, storeContacts, showDemoData]
+  );
+  const storeId = (c: ApiContact) => String(c.id).replace(/^demo-/, '');
 
   // Deep links: ?new=1 opens the create dialog, ?search=1 focuses the search box.
   const inRouter = useInRouterContext();
@@ -133,7 +164,19 @@ const ContactsManager: React.FC = () => {
 
   const columns = useMemo<RecordColumn<ApiContact>[]>(
     () => [
-      { id: 'name', header: 'Name', accessor: fullName, editable: true, width: 200 },
+      {
+        id: 'name',
+        header: 'Name',
+        accessor: fullName,
+        render: (c) => (
+          <span className="inline-flex items-center gap-2">
+            {fullName(c)}
+            {c.isDemo && <SampleBadge />}
+          </span>
+        ),
+        editable: true,
+        width: 200,
+      },
       { id: 'email', header: 'Email', accessor: (c) => c.email, width: 220 },
       { id: 'company', header: 'Company', accessor: (c) => c.company, editable: true },
       { id: 'industry', header: 'Industry', accessor: (c) => c.industry },
@@ -153,7 +196,71 @@ const ContactsManager: React.FC = () => {
     setContacts((prev) => prev.map((x) => (x.id === c.id ? { ...x, ...updated } : x)));
   };
 
+  /** Applies a table edit to a sample contact in the store only. */
+  const editDemoRow = async (c: ApiContact, updates: Partial<ApiContact>) => {
+    const { firstName, lastName, ...rest } = updates;
+    useContactStore.getState().updateContact(storeId(c), {
+      ...rest,
+      ...(firstName !== undefined ? { firstName: firstName ?? '' } : {}),
+      ...(lastName !== undefined ? { lastName: lastName ?? '' } : {}),
+    } as never);
+  };
+
+  // Bulk actions: sample rows are handled locally, real rows go through the REST adapter.
+  const bulkAdapter = useMemo<BulkAdapter<ApiContact>>(() => {
+    const split = async (
+      list: ApiContact[],
+      real: (rows: ApiContact[]) => Promise<BulkResult>,
+      demo: (row: ApiContact) => Promise<unknown>
+    ): Promise<BulkResult> => {
+      const demoRows = list.filter((r) => r.isDemo);
+      const realRows = list.filter((r) => !r.isDemo);
+      await Promise.all(demoRows.map(demo));
+      const result = realRows.length ? await real(realRows) : { succeeded: 0, errors: [] };
+      return { succeeded: result.succeeded + demoRows.length, errors: result.errors };
+    };
+    // Tagging/owner assignment/merge only exist on the server, so sample rows are reported as skipped.
+    const sampleSkipped = (rows: ApiContact[]) =>
+      rows.filter((r) => r.isDemo).map((r) => ({ id: String(r.id), message: 'Sample contacts cannot be changed this way' }));
+    const serverOnly = async (
+      list: ApiContact[],
+      real: (rows: ApiContact[]) => Promise<BulkResult>
+    ): Promise<BulkResult> => {
+      const realRows = list.filter((r) => !r.isDemo);
+      const result = realRows.length ? await real(realRows) : { succeeded: 0, errors: [] };
+      return { succeeded: result.succeeded, errors: [...result.errors, ...sampleSkipped(list)] };
+    };
+    return {
+      ...contactsAdapter,
+      ...(contactsAdapter.addTag
+        ? { addTag: (list: ApiContact[], tag: string) => serverOnly(list, (r) => contactsAdapter.addTag!(r, tag)) }
+        : {}),
+      ...(contactsAdapter.assignOwner
+        ? { assignOwner: (list: ApiContact[], ownerId: string) => serverOnly(list, (r) => contactsAdapter.assignOwner!(r, ownerId)) }
+        : {}),
+      ...(contactsAdapter.merge
+        ? {
+            merge: async (primary: ApiContact, duplicate: ApiContact) => {
+              if (primary.isDemo || duplicate.isDemo) throw new Error('Sample contacts cannot be merged');
+              await contactsAdapter.merge!(primary, duplicate);
+            },
+          }
+        : {}),
+      updateMany: (list, patchValues) =>
+        split(list, (r) => contactsAdapter.updateMany(r, patchValues), (r) => editDemoRow(r, patchValues as Partial<ApiContact>)),
+      deleteMany: (list) =>
+        split(list, (r) => contactsAdapter.deleteMany(r), async (r) => useContactStore.getState().deleteContact(storeId(r))),
+    };
+  }, []);
+
   const onCellEdit = (c: ApiContact, col: RecordColumn<ApiContact>, value: string | number) => {
+    if (c.isDemo) {
+      if (col.id === 'name') {
+        const [first, ...rest] = String(value).trim().split(/\s+/);
+        return editDemoRow(c, { firstName: first ?? '', lastName: rest.join(' ') });
+      }
+      return editDemoRow(c, { [col.id]: String(value) });
+    }
     if (col.id === 'name') {
       const [first, ...rest] = String(value).trim().split(/\s+/);
       return patch(c, { firstName: first ?? '', lastName: rest.join(' ') });
@@ -209,7 +316,7 @@ const ContactsManager: React.FC = () => {
   return (
     <div className="h-full">
       <RecordTable<ApiContact>
-        data={contacts}
+        data={rows}
         columns={columns}
         getRowId={(c) => String(c.id)}
         loading={loading}
@@ -221,18 +328,27 @@ const ContactsManager: React.FC = () => {
         exportName="contacts"
         rowLabel={(c) => fullName(c) || c.email || String(c.id)}
         onCellEdit={onCellEdit}
-        bulkAdapter={contactsAdapter}
+        bulkAdapter={bulkAdapter}
         onDataChanged={() => void load()}
-        rowMenu={(c) => [
+        rowMenu={(c) =>
+          c.isDemo
+            ? []
+            : [
           { label: 'Open record', onSelect: () => navigate(`/contacts/${c.id}`) },
           { label: 'Add task', onSelect: () => navigate(`/contacts/${c.id}?tab=tasks`) },
           { label: 'Add note', onSelect: () => navigate(`/contacts/${c.id}?tab=notes`) },
-        ]}
+              ]
+        }
         drawer={{
           title: (c) => fullName(c) || 'Unnamed contact',
           subtitle: (c) => c.email ?? undefined,
-          openHref: (c) => `/contacts/${c.id}`,
-          render: (c) => <ContactPanelBody contactId={String(c.id)} />,
+          openHref: (c) => (c.isDemo ? '/contacts' : `/contacts/${c.id}`),
+          render: (c) =>
+            c.isDemo ? (
+              <p className="text-sm text-gray-600">Sample contact — clear sample data in the dashboard settings, or add a real contact.</p>
+            ) : (
+              <ContactPanelBody contactId={String(c.id)} />
+            ),
         }}
         toolbarExtra={
           <button onClick={() => setImportOpen(true)} className="border rounded px-3 py-1.5 text-sm">

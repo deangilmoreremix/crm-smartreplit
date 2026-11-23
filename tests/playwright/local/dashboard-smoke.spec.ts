@@ -105,6 +105,8 @@ test.describe('routes render (no redirect to landing, no uncaught errors)', () =
       await shot(page, `route${path.replace(/\//g, '_')}`);
       const url = new URL(page.url());
       expect(['/', '/upgrade', '/signin', '/login'], `redirected away from ${path} to ${url.pathname}`).not.toContain(url.pathname);
+      // React's error boundary swallows render crashes, so pageerror alone would miss them.
+      expect(await page.locator('body').innerText(), `${path} hit the error boundary`).not.toMatch(/Something went wrong/i);
       expect(c.pageErrors, c.pageErrors.join('\n')).toEqual([]);
     });
   }

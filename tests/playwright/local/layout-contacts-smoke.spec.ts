@@ -32,4 +32,24 @@ test.describe('layout editor and contacts (local, stubbed backend)', () => {
     }
     expect(c.pageErrors, c.pageErrors.join('\n')).toEqual([]);
   });
+
+  test('sample contacts appear (labeled) in the Manage table only while sample data is on', async ({ page }) => {
+    const c = await prepare(page);
+    await page.goto('/contacts');
+    await page.waitForTimeout(3000);
+    await expect(page.getByText('Jane Doe').first()).toBeVisible();
+    await expect(page.getByText(/sample/i).first()).toBeVisible();
+    expect(c.pageErrors, c.pageErrors.join('\n')).toEqual([]);
+  });
+
+  test('no sample contacts in the Manage table when sample data is off', async ({ page }) => {
+    await prepare(page);
+    await page.addInitScript(() => {
+      try { localStorage.setItem('smartcrm_show_demo_data', 'false'); } catch { /* ignore */ }
+    });
+    await page.goto('/contacts');
+    await page.waitForTimeout(3000);
+    await expect(page.getByText('Jane Doe')).toHaveCount(0);
+    await expect(page.getByText(/No contacts yet/)).toBeVisible();
+  });
 });
