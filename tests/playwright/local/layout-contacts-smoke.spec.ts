@@ -52,4 +52,13 @@ test.describe('layout editor and contacts (local, stubbed backend)', () => {
     await expect(page.getByText('Jane Doe')).toHaveCount(0);
     await expect(page.getByText(/No contacts yet/)).toBeVisible();
   });
+
+  test('AI Goals embeds the Agency app (no "Coming Soon" placeholder)', async ({ page }) => {
+    const c = await prepare(page);
+    await page.goto('/ai-goals');
+    await page.waitForTimeout(3000);
+    expect(await page.locator('body').innerText()).not.toMatch(/Coming Soon|under development/i);
+    await expect(page.locator('iframe[src^="https://agency.smartcrm.vip"]')).toHaveCount(1);
+    expect(c.pageErrors, c.pageErrors.join('\n')).toEqual([]);
+  });
 });

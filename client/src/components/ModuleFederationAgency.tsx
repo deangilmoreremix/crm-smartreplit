@@ -2,6 +2,7 @@ import React from 'react';
 import { useRemoteComponent } from '../utils/dynamicModuleFederation';
 import { useSharedModuleState } from '../utils/moduleFederationOrchestrator';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
+import RemoteAIGoalsLoader from './RemoteAIGoalsLoader';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
@@ -19,46 +20,6 @@ if (import.meta.env.DEV) {
   });
 }
 
-// Local fallback component when Module Federation is not available
-interface LocalAgencyFallbackProps {
-  companyName: string;
-}
-
-const LocalAgencyFallback: React.FC<LocalAgencyFallbackProps> = ({ companyName }) => {
-  return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="text-center p-8">
-        <div className="mb-4">
-          <svg
-            className="w-16 h-16 mx-auto text-purple-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-            />
-          </svg>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          {companyName} Agency
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 max-w-md">
-          The AI Agency module is under development and will be available soon. This module will
-          provide AI-powered sales automation, lead scoring, and campaign management.
-        </p>
-        <div className="inline-flex items-center px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs">
-          <span className="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>
-          Coming Soon
-        </div>
-      </div>
-    </div>
-  );
-};
-
 interface ModuleFederationAgencyProps {
   showHeader?: boolean;
 }
@@ -74,7 +35,8 @@ const ModuleFederationAgency: React.FC<ModuleFederationAgencyProps> = ({
   } = useRemoteComponent(ENABLE_MFE ? AGENCY_REMOTE_URL : null, AGENCY_SCOPE, AGENCY_MODULE);
 
   if (!ENABLE_MFE || error) {
-    return <LocalAgencyFallback companyName={config.companyName} />;
+    // Without Module Federation, embed the live Agency app (agency.smartcrm.vip) directly.
+    return <RemoteAIGoalsLoader showHeader={false} />;
   }
 
   if (loading || !RemoteAgencyApp) {

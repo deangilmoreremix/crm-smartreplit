@@ -10,30 +10,22 @@ const AIGoalsWithRemote: React.FC = () => {
   const { isDark } = useTheme();
   const { config } = useWhitelabel();
 
+  // top-16 keeps the page below the fixed navbar.
   return (
-    <div className="fixed inset-0 w-full overflow-hidden z-40">
+    <div className="fixed inset-x-0 bottom-0 top-16 w-full overflow-hidden z-40">
       {/* Full Screen AI Goals / Agency Component - Module Federation */}
       <div className="h-full w-full">
         <ModuleFederationAgency showHeader />
 
-        {/* Module Federation Status Indicator - Floating */}
-        <div className="absolute top-4 right-4 z-30">
-          <div
-            className={
-              'flex items-center space-x-2 px-3 py-2 rounded-full text-xs font-medium shadow-lg ' +
-              (ENABLE_MFE
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                : 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400')
-            }
-          >
-            <div
-              className={
-                'w-2 h-2 rounded-full animate-pulse ' + (ENABLE_MFE ? 'bg-green-500' : 'bg-purple-500')
-              }
-            />
-            <span>{ENABLE_MFE ? 'Module Federation (Live)' : 'Module Federation (Fallback)'}</span>
+        {/* Module Federation status indicator: only meaningful when federation is enabled */}
+        {ENABLE_MFE && (
+          <div className="absolute top-4 right-4 z-30">
+            <div className="flex items-center space-x-2 px-3 py-2 rounded-full text-xs font-medium shadow-lg bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+              <div className="w-2 h-2 rounded-full animate-pulse bg-green-500" />
+              <span>Module Federation (Live)</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* External Link Button - opens the standalone Agency app */}
         <div className="absolute top-4 left-4 z-30">
