@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -42,10 +42,26 @@ const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
   ({ className, children, ...props }, ref) => {
     const { onOpenChange, open } = useDialogContext();
 
+    // Escape closes the dialog, same as the X button.
+    useEffect(() => {
+      if (!open) return;
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onOpenChange(false);
+      };
+      document.addEventListener('keydown', onKeyDown);
+      return () => document.removeEventListener('keydown', onKeyDown);
+    }, [open, onOpenChange]);
+
     if (!open) return null;
 
     return createPortal(
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm">
+      <div
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+        // Clicking the dimmed backdrop (not the dialog itself) closes it.
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onOpenChange(false);
+        }}
+      >
         <div className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-lg">
           <div
             ref={ref}

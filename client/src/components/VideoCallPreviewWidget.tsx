@@ -403,7 +403,7 @@ const VideoCallPreviewWidget = React.memo(() => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 hardware-accelerated contain-layout">
+    <div className="fixed bottom-40 right-6 z-40 hardware-accelerated contain-layout">
       <div
         className={`backdrop-blur-2xl border rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
           isDark ? 'bg-gray-900/95 border-white/20' : 'bg-white/95 border-gray-200'

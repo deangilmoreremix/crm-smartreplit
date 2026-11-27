@@ -22,7 +22,10 @@ export const EdgeZones: React.FC = () => {
                   ? 'bg-blue-500/20 border-2 border-blue-500'
                   : 'bg-transparent'
               }`}
+              // These strips are always mounted; without pointerEvents none they swallow clicks on any control
+              // within 100px of a screen edge. The drag library finds drop targets by geometry, not hit-testing.
               style={{
+                pointerEvents: 'none',
                 [zone.position]: 0,
                 width: zone.position === 'top' || zone.position === 'bottom' ? '100%' : '100px',
                 height: zone.position === 'left' || zone.position === 'right' ? '100%' : '100px',
