@@ -33,6 +33,15 @@ test.describe('visible controls are not covered by other elements', () => {
           const cx = b.left + b.width / 2;
           const cy = b.top + b.height / 2;
           if (cx < 0 || cy < 0 || cx > window.innerWidth || cy > window.innerHeight) return;
+          // Controls clipped out of view by a scrolling/hidden-overflow ancestor are reached by scrolling
+          // (e.g. the navbar pills; see navbar-smoke.spec.ts), so they cannot be hit-tested here.
+          for (let n = h.parentElement; n && n !== document.body; n = n.parentElement) {
+            const cs = getComputedStyle(n);
+            if (/(auto|scroll|hidden|clip)/.test(cs.overflowX + cs.overflowY)) {
+              const r = n.getBoundingClientRect();
+              if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) return;
+            }
+          }
           const top = document.elementFromPoint(cx, cy);
           // Toasts are transient and may briefly sit over something.
           if (top?.closest('[aria-label^="Notifications"]')) return;
@@ -42,9 +51,7 @@ test.describe('visible controls are not covered by other elements', () => {
         });
         return out;
       });
-      // KNOWN ISSUE (tracked, not fixed): at 1440px the navbar's "Settings" item is partly under the
-      // notification bell. Remove this filter once the navbar overflow is fixed.
-      const unexpected = covered.filter((c) => !/^button "Settings" covered by/.test(c));
+      const unexpected = covered;
       if (process.env.CLICK_AUDIT_OUT) require('fs').appendFileSync(process.env.CLICK_AUDIT_OUT, `\n## ${path}\n${covered.join('\n')}\n`);
       expect(unexpected, unexpected.join('\n')).toEqual([]);
     });

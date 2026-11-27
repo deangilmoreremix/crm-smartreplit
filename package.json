@@ -33,6 +33,7 @@
     "test:watch": "vitest",
     "test:smoke": "node scripts/smoke-api.mjs",
     "test:e2e": "playwright test --config tests/playwright/staging/playwright.config.ts",
+    "test:smoke:local": "playwright test --config tests/playwright/local/playwright.config.ts --trace off",
     "format": "prettier --write .",
     "db:push": "drizzle-kit push",
     "prepare": "husky",

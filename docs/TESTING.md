@@ -142,6 +142,15 @@ SKIP reasons you may see: `API_KEY_PEPPER` missing (503), AI jobs not configured
 
 What it proves, for all 28 new tables (plus supporting tables): RLS is enabled and no policy is `USING (true)`; user A sees exactly its own seeded rows and none of B's; B cannot see, update or delete A's rows; anon sees nothing; inserts with another user's id are rejected; `webhooks.secret` and `api_keys.key_hash` are not selectable (also not through `SELECT *`); anon cannot execute `request_domain`, `global_search`, the permission helpers; `request_domain` normalises, rejects invalid/reserved/duplicate hosts and owners cannot insert or self-verify domains; `get_branding_for_host` answers only for `active` domains; `has_object_perm`, `has_field_perm`, `mask_record_data`, `visible_owner_ids` behave for owner, active member and disabled member; team policies grant record access per role; `records_masked` hides restricted fields (when migration `20261115100000` is applied); `pg_trgm`/`unaccent` exist; `timeline_log_*`, webhook and workflow-event triggers exist on contacts/deals/tasks/notes; storage buckets and the realtime publication are present.
 
+### Local browser smoke (no credentials)
+Runs against the built client with Supabase and `/api` stubbed, so it works anywhere and is what the `browser-smoke` CI job runs.
+```
+VITE_SUPABASE_URL=https://dummy.supabase.co VITE_SUPABASE_ANON_KEY=dummy npx vite build --outDir dist-smoke
+npx vite preview --outDir dist-smoke --host 127.0.0.1 --port 4173 &
+LOCAL_BASE_URL=http://127.0.0.1:4173 npm run test:smoke:local
+```
+In the sandbox use the pre-installed Chromium: `LOCAL_CHROMIUM=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome`. Set `LOCAL_SMOKE_OUT` to a dedicated folder (Playwright empties its output directory).
+
 ### E2E (Playwright)
 ```
 export E2E_BASE_URL=https://deploy-preview-12--yoursite.netlify.app

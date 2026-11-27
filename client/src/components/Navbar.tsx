@@ -151,6 +151,33 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+  // The desktop pills scroll horizontally when they do not fit; the arrows below make that visible.
+  const pillsRef = useRef<HTMLDivElement>(null);
+  const [pillScroll, setPillScroll] = useState({ left: false, right: false });
+
+  useEffect(() => {
+    const el = pillsRef.current;
+    if (!el) return;
+    const update = () =>
+      setPillScroll({
+        left: el.scrollLeft > 1,
+        right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
+      });
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null;
+    ro?.observe(el);
+    if (el.firstElementChild) ro?.observe(el.firstElementChild);
+    window.addEventListener('resize', update);
+    return () => {
+      el.removeEventListener('scroll', update);
+      ro?.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  const scrollPills = (direction: -1 | 1) =>
+    pillsRef.current?.scrollBy({ left: direction * 240, behavior: 'smooth' });
   const { isDark, toggleTheme } = useTheme();
   const { config } = useWhitelabel();
   const { openAITool } = useNavigation(); // expected from your AIToolsProvider/Navigation layer
@@ -630,9 +657,21 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
               </div>
 
               {/* Desktop nav pills */}
-              <div className="hidden lg:flex flex-1 min-w-0">
+              <div className="hidden lg:flex flex-1 min-w-0 items-center">
+                {pillScroll.left && (
+                  <button
+                    type="button"
+                    onClick={() => scrollPills(-1)}
+                    aria-label="Scroll navigation left"
+                    data-testid="nav-scroll-left"
+                    className={`shrink-0 p-1 rounded-full ${isDark ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-600'}`}
+                  >
+                    <ChevronLeft size={16} className="block shrink-0" />
+                  </button>
+                )}
                 <div
-                  className="w-full overflow-x-auto px-1 py-1.5"
+                  ref={pillsRef}
+                  className="flex-1 min-w-0 overflow-x-auto px-1 py-1.5"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   <div className="inline-flex items-center gap-1 whitespace-nowrap">
@@ -931,6 +970,17 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                     ))}
                   </div>
                 </div>
+                {pillScroll.right && (
+                  <button
+                    type="button"
+                    onClick={() => scrollPills(1)}
+                    aria-label="Scroll navigation right"
+                    data-testid="nav-scroll-right"
+                    className={`shrink-0 p-1 rounded-full ${isDark ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-600'}`}
+                  >
+                    <ChevronRight size={16} className="block shrink-0" />
+                  </button>
+                )}
               </div>
 
               {/* Mobile menu button */}

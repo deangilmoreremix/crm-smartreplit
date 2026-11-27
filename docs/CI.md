@@ -11,6 +11,8 @@ Stack: GitHub Actions (for Netlify), Netlify, Supabase, OpenAI. Nothing else.
 3. `npx vitest run`
 4. `npm run build` (Vite client + Netlify functions + `scripts/verify-dist.mjs`), with dummy `VITE_SUPABASE_*` values.
 
+A second job, `browser-smoke`, builds the client with dummy env, serves it with `vite preview` and runs the local Playwright suite (`npm run test:smoke:local`, specs in `tests/playwright/local/`). Supabase and `/api` are stubbed inside the tests, so it needs no secrets or backend. It checks that pages render without hitting the error boundary, that routes do not redirect away, that sample data can be cleared and restored, and that no visible control is covered by another element. Failure artifacts are uploaded as `browser-smoke-results`.
+
 ## Type-check ratchet
 
 The client had ~1,000 pre-existing type errors, so a plain `tsc` gate would be permanently red. The ratchet runs `tsc`, reduces each error to `file: TScode` (line/column dropped) and compares per-pair counts with a committed baseline:

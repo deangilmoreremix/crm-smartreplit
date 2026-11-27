@@ -60,3 +60,55 @@ jobs:
 
       - name: Build (client + Netlify functions)
         run: npm run build
+
+  # Real-browser smoke of the built client (no secrets, no backend: Supabase and /api are stubbed
+  # by the tests). Catches crashes, redirects and controls that cannot be clicked.
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: https://dummy.supabase.co
+      VITE_SUPABASE_ANON_KEY: dummy-anon-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false --ignore-scripts
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build client
+        run: npx vite build --outDir dist-smoke
+
+      - name: Serve the build
+        run: |
+          npx vite preview --outDir dist-smoke --host 127.0.0.1 --port 4173 > preview.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:4173/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat preview.log
+          exit 1
+
+      - name: Browser smoke
+        env:
+          LOCAL_BASE_URL: http://127.0.0.1:4173
+        run: npm run test:smoke:local
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-results
+          path: test-results-local
+          if-no-files-found: ignore
